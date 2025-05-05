@@ -1,0 +1,17 @@
+{
+    "name": "florentak/edu-linker",
+    "description": "EduLinker est une plateforme scolaire de gestion des affectations d'encadreurs aux étudiants dans le cadre de leur mémoire de fin d'études.",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    },
+    "authors": [
+        {
+            "name": "florentak",
+            "email": "florentkossiayidedji@gmail.com"
+        }
+    ],
+    "require": {}
+}
