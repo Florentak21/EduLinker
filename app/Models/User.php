@@ -48,6 +48,38 @@ class User extends Model {
         ");
         return $stmt->execute($data);
     }
+    /**
+     * Met à jour un utilisateur existant.
+     *
+     * @param int $id
+     * @param array $data
+     * @return bool
+     */
+    public static function update(int $id, array $data): bool
+    {
+        $fields = [];
+        foreach ($data as $key => $value) {
+            $fields[] = "`$key` = :$key";
+        }
+        $sql = "UPDATE users SET " . implode(', ', $fields) . ", updated_at = NOW() WHERE id = :id";
+        $stmt = parent::$pdo->prepare($sql);
+        // bind id as well
+        $data['id'] = $id;
+        return $stmt->execute($data);
+    }
+
+    /**
+     * Supprime un user par son id.
+     *
+     * @param int $id
+     * @return bool
+     */
+    public static function delete(int $id): bool
+    {
+        $stmt = parent::$pdo->prepare("DELETE FROM users WHERE id = ?");
+        return $stmt->execute([intval($id)]);
+    }
+
 
     /**
      * Recherche un user grâce à son email.
