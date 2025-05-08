@@ -1,6 +1,5 @@
 <?php
-/**
- * Chargement de l'autoloader de composer
- * pour le chargement automatique des classes.
- */
+declare(strict_types=1);
+
+/* Inclusion de l'autoloader de composer. */
 require_once dirname(__DIR__) . DIRECTORY_SEPARATOR . "vendor" . DIRECTORY_SEPARATOR . "autoload.php";

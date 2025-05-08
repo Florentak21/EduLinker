@@ -1,11 +1,13 @@
 <?php
 
 namespace App\Core;
+use PDO;
 
 abstract class Model {
-    /**
-     * mon model de base
-     * il contient le code de base que tous mes models auront.
-     * 
-     * */
+    protected PDO $pdo;
+
+    public function __construct()
+    {
+        $this->pdo = require dirname(__DIR__) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'database.php';
+    }
 }
