@@ -21,7 +21,7 @@
 ###  Administrateur
 - Connexion
 - Gestion des domaines d'études
-- Création des enseignants
+- Gestion des enseignants
 - Affectation manuelle des encadreurs
 - Statistiques
 
@@ -52,9 +52,21 @@
 ##  Mise en route du projet
 
 ### 1. Cloner le dépôt
-    git clone https://github.com/Florentak21/EduLinker.git
-    cd EduLinker
+    ***git clone https://github.com/Florentak21/EduLinker.git***
+    ***cd EduLinker***
 
-### 2. Installer composer et les différentes dépendances et gérer l'autoloading
-    composer install
-    composer dump-autoload
+### 2. Installer les différentes dépendances et recharger les classes.
+    ***composer install***
+    ***composer dump-autoload***
+
+### 3. Base de données (mysql)
+    - Configurer la base de données
+      - Créer la base de données avec le nom **edu_linker**
+      - éditer le fichier **config/database.php** en mettant vos identifiants mysql (username et password).
+    - Jouer les migrations et les seeders(pour préremplir la base de données)
+      - en étant à la racine du projet, exécuter:
+        - ***vendor/bin/phinx migrate***
+        - ***vendor/bin/seed:run***
+  
+### 4. Démarrage de l'application
+    - executer la commande: ***php -S localhost:8000 -t public***
