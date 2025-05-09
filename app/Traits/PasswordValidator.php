@@ -14,19 +14,12 @@ trait PasswordValidator {
     {
         $password = trim($password);
 
-        if (empty($password))
-        {
+        if (empty($password)) {
             return "Le mot de passe est requis.";
         }
 
-        if (strlen($password) < 8)
-        {
-            return "Le mot de passe doit contenir au moins 8 caractères.";
-        }
-        
-        if (!preg_match('/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/', $password))
-        {
-            return "Le mot de passe doit contenir au moins une lettre majuscule, une lettre minuscule, un chiffre et un caractère spécial.";
+        if (!preg_match('/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/', $password)) {
+            return "Le mot de passe doit contenir au moins 8 caractères, une lettre majuscule, une lettre minuscule, un chiffre et un caractère spécial.";
         }
 
         return null;
