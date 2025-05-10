@@ -150,6 +150,17 @@ class Teacher extends Model {
     }
 
     /**
+     * Permet de récupérer le nombre total de teachers.
+     */
+    public static function count(): int
+    {
+        $stmt = parent::getPdo()->prepare("SELECT COUNT(*) FROM teachers");
+        $stmt->execute();
+        $result = $stmt->fetchColumn();
+        return (int) $result;
+    }
+
+    /**
      * Supprime un teacher.
      * 
      * @param int $id
@@ -160,5 +171,24 @@ class Teacher extends Model {
     {
         $stmt = parent::getPdo()->prepare("DELETE FROM teachers WHERE id = ?");
         return $stmt->execute([intval($id)]);
+    }
+
+    /**
+     * Récupère les étudiants qu'un professeur doit encadrer.
+     * 
+     * @param int $id
+     * 
+     * @return array
+     */
+    public static function getAssignedStudents(int $id) :array
+    {
+        $stmt = parent::getPdo()->prepare("
+            SELECT students.*, users.firstname, users.lastname, users.gender, users.email 
+            FROM students 
+            JOIN users ON students.user_id = users.id 
+            WHERE students.teacher_id = ?
+        ");
+        $stmt->execute([intval($id)]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 }

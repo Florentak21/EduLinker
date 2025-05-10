@@ -67,6 +67,19 @@ class Domain extends Model {
     }
 
     /**
+     * Permet de récupérer le nombre total de domaine.
+     * 
+     * @return int
+     */
+    public static function count(): int
+    {
+        $stmt = parent::getPdo()->prepare("SELECT COUNT(*) FROM domains");
+        $stmt->execute();
+        $result = $stmt->fetchColumn();
+        return (int) $result;
+    }
+
+    /**
      * Supprime un domaine par son id.
      *
      * @param int $id

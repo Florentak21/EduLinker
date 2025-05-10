@@ -10,6 +10,7 @@ use App\Traits\MatriculeValidator;
 use App\Traits\BinomeMatriculeValidator;
 use App\Traits\PhoneValidator;
 use App\Models\Student;
+use App\Models\Teacher;
 use App\Models\Domain;
 use App\Traits\EmailValidator;
 use App\Traits\FirstnameValidator;
@@ -26,7 +27,7 @@ class StudentController extends Controller {
     }
 
     /**
-     * Affiche tous les students.
+     * Affiche tous les students (pour l'admin).
      * 
      * @return void
      */
@@ -37,7 +38,7 @@ class StudentController extends Controller {
     }
 
     /**
-     * Affiche le formulaire de création d'un student.
+     * Affiche le formulaire de création d'un student (pour l'admin).
      * 
      * @return void
      */
@@ -48,7 +49,7 @@ class StudentController extends Controller {
     }
 
     /**
-     * Traite le formulaire de création d'un student.
+     * Traite le formulaire de création d'un student (pour l'admin).
      * 
      * @return void
      */
@@ -78,7 +79,7 @@ class StudentController extends Controller {
             $errors['domain_id'] = 'Le champ domaine est requis.';
         }
 
-        /* Génération du matricule basé sur le doamine d'étude du student. */
+        /* Génération du matricule basé sur le domaine d'étude du student. */
         $domain = Domain::find($_POST['domain_id']);
         $matricule = $this->generateMatricule($domain['code']);
 
@@ -107,7 +108,7 @@ class StudentController extends Controller {
     }
 
     /**
-     * Affiche le formulaire d'édition d'un student.
+     * Affiche le formulaire d'édition d'un student (pour l'admin).
      * 
      * @param int $id
      * 
@@ -126,7 +127,7 @@ class StudentController extends Controller {
     }
 
     /**
-     * Traite le formulaire d'édition d'un student.
+     * Traite le formulaire d'édition d'un student (pour l'admin).
      * 
      * @return void
      */
@@ -191,7 +192,7 @@ class StudentController extends Controller {
     }
 
     /**
-     * Suuprime un student.
+     * Supprime un student (pour l'admin).
      * 
      * @param int $id
      * 
@@ -220,13 +221,13 @@ class StudentController extends Controller {
         $student = Student::find($id);
         if (!$student) {
             header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404');
+            $this->view('errors/404', ['error' => 'Étudiant non trouvé.']);
             return;
         }
 
         // Vérifier si une soumission a déjà été faite
         if ($student['theme_status'] !== 'non-soumis') {
-            $this->view('students/submit-cdc', ['student' => $student, 'error' => 'Une soumission a déjà été effectuée pour cet étudiant.']);
+            $this->view('students/submit-cdc', ['student' => $student, 'error' => 'Une soumission a déjà été effectuée.']);
             return;
         }
 
@@ -257,8 +258,8 @@ class StudentController extends Controller {
             }
 
             $file = $_FILES['cdc_file'];
-            $fileName = uniqid() . '_' . basename($file['name']);
-            $uploadDir = __DIR__ . '/../../public/uploads/';
+            $fileName = 'cahier_de_charge' . '_'. Domain::find($student['domain_id']);
+            $uploadDir = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'storage';
             $uploadPath = $uploadDir . $fileName;
 
             if (!is_dir($uploadDir)) {
@@ -272,10 +273,11 @@ class StudentController extends Controller {
                     'cdc' => $fileName,
                     'has_binome' => $hasBinome ? 1 : 0,
                     'matricule_binome' => $hasBinome ? ($_POST['matricule_binome'] ?? null) : null,
-                    'description' => $_POST['description']
+                    'description' => $_POST['description'],
+                    'submitted_at' => (new \DateTime())->format('Y-m-d H:i:s')
                 ];
                 if (Student::update($id, $data)) {
-                    $this->redirect('students');
+                    $this->view('students/submit-cdc', ['student' => $student, 'success' => 'CDC soumis avec succès.']);
                 } else {
                     $this->view('students/submit-cdc', ['student' => $student, 'error' => 'Erreur lors de la soumission.']);
                 }
@@ -285,6 +287,73 @@ class StudentController extends Controller {
         } else {
             $this->view('students/submit-cdc', ['student' => $student]);
         }
+    }
+
+    /**
+     * Permet à l'étudiant de relancer l'admin après 7 jours.
+     * 
+     * @param int $id
+     * @return void
+     */
+    public function remind(int $id): void
+    {
+        $student = Student::find($id);
+        if (!$student) {
+            header('HTTP/1.1 404 Not Found');
+            $this->view('errors/404', ['error' => 'Étudiant non trouvé.']);
+            return;
+        }
+
+        // Vérifier si une relance est possible
+        if ($student['theme_status'] !== 'en-traitement' || !$student['submitted_at']) {
+            $this->view('students/remind', ['student' => $student, 'error' => 'Aucune soumission en attente de traitement.']);
+            return;
+        }
+
+        $submittedDate = new \DateTime($student['submitted_at']);
+        $now = new \DateTime();
+        $interval = $submittedDate->diff($now);
+        if ($interval->days < 7) {
+            $this->view('students/remind', ['student' => $student, 'error' => 'Vous devez attendre 7 jours après la soumission pour relancer.']);
+            return;
+        }
+
+        // Mettre à jour last_reminder_at
+        $data = [
+            'last_reminder_at' => $now->format('Y-m-d H:i:s')
+        ];
+        if (Student::update($id, $data)) {
+            $this->view('students/remind', ['student' => $student, 'success' => 'Relance envoyée avec succès.']);
+        } else {
+            $this->view('students/remind', ['student' => $student, 'error' => 'Erreur lors de la relance.']);
+        }
+    }
+
+    /**
+     * Vérifie l'encadreur assigné à l'étudiant.
+     * 
+     * @param int $id
+     * @return void
+     */
+    public function checkSupervisor(int $id): void
+    {
+        $student = Student::find($id);
+        if (!$student) {
+            header('HTTP/1.1 404 Not Found');
+            $this->view('errors/404', ['error' => 'Étudiant non trouvé.']);
+            return;
+        }
+
+        // Vérifier l'encadreur assigné
+        $supervisor = null;
+        if ($student['teacher_id'] && $student['theme_status'] === 'validé') {
+            $supervisor = Teacher::find($student['teacher_id']);
+        }
+
+        $this->view('students/check-supervisor', [
+            'student' => $student,
+            'supervisor' => $supervisor
+        ]);
     }
 
     /**

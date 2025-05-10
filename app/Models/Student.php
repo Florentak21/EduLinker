@@ -220,4 +220,61 @@ class Student extends Model {
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result ?: null;
     }
+
+    /**
+     * Récupère tous les étudiants avec un statut de thème donné.
+     * 
+     * @param string $themeStatus
+     * @return array
+     */
+    public static function findByThemeStatus(string $themeStatus): array
+    {
+        $stmt = parent::getPdo()->prepare("
+            SELECT students.*, users.firstname, users.lastname, users.email 
+            FROM students 
+            JOIN users ON students.user_id = users.id 
+            WHERE students.theme_status = ?
+        ");
+        $stmt->execute([$themeStatus]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Permet de récupérer le nombre total de students.
+     */
+    public static function count(): int
+    {
+        $stmt = parent::getPdo()->prepare("SELECT COUNT(*) FROM students");
+        $stmt->execute();
+        $result = $stmt->fetchColumn();
+        return (int) $result;
+    }
+
+    /**
+     * Permet de récupérer le nombre total de thème.
+     * 
+     * @return int
+     */
+    public static function countThemes(): int
+    {
+        $stmt = parent::getPdo()->prepare("SELECT COUNT(theme) FROM students");
+        $stmt->execute();
+        $result = $stmt->fetchColumn();
+        return (int) $result;
+    }
+
+    /**
+     * Permet de compter le nombre de theme suivant le status.
+     * 
+     * @param string $theme
+     * 
+     * @return int
+     */
+    public static function countThemesByStatus(string $themeStatus): int
+    {
+        $stmt = parent::getPdo()->prepare("SELECT COUNT(*) FROM students WHERE theme_status = ?");
+        $stmt->execute([$themeStatus]);
+        $result = $stmt->fetchColumn();
+        return (int) $result;
+    }
 }

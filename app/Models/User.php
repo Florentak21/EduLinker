@@ -94,6 +94,30 @@ class User extends Model {
     }
 
     /**
+     * Permet de récupérer le nombre total de users.
+     */
+    public static function count(): int
+    {
+        $stmt = parent::getPdo()->prepare("SELECT COUNT(*) FROM users");
+        $stmt->execute();
+        $result = $stmt->fetchColumn();
+        return (int) $result;
+    }
+
+    /**
+     * Permet de récupérer le nombre total d'utilisateur suivant le rôle.
+     * 
+     * @return int
+     */
+    public static function countUsersByRole(string $role): int
+    {
+        $stmt = parent::getPdo()->prepare("SELECT COUNT(*) FROM users WHERE role = ?");
+        $stmt->execute([$role]);
+        $result = $stmt->fetchColumn();
+        return (int) $result;
+    }
+
+    /**
      * Supprime un user.
      *
      * @param int $id

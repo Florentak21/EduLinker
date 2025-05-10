@@ -30,6 +30,8 @@ final class CreateStudentsTable extends AbstractMigration
             ->addColumn('user_id', 'integer',['signed' => false, 'null' => false])
             ->addColumn('domain_id', 'integer',['signed' => false, 'null' => false])
             ->addColumn('teacher_id', 'integer', ['signed' => false, 'null'=>true])
+            ->addColumn('submitted_at', 'timestamp', ['null' => true])
+            ->addColumn('last_reminder_at', 'timestamp', ['null' => true])
             ->addTimestamps()
             ->addIndex(['matricule'], ['unique'=>true])
             ->addIndex(['phone'], ['unique'=>true])

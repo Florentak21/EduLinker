@@ -11,6 +11,7 @@ use App\Traits\GenderValidator;
 use App\Traits\PasswordValidator;
 use App\Models\Teacher;
 use App\Models\Domain;
+use App\Models\Student;
 
 class TeacherController extends Controller {
     use PhoneValidator, EmailValidator, LastnameValidator, FirstnameValidator, GenderValidator, PasswordValidator;
@@ -29,6 +30,16 @@ class TeacherController extends Controller {
     {
         $teachers = Teacher::all();
         $this->view('teachers/index', ['teachers' => $teachers]);
+    }
+
+    public function dashboard(int $id): void
+    {
+        $data = [
+            'teacher' => Teacher::find($id),
+            'students' => Teacher::getAssignedStudents($id)
+        ];
+
+        $this->view('teachers/dashboard', $data);
     }
 
     /**
