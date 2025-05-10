@@ -23,11 +23,6 @@ trait ThemeValidator {
         {
             return "Le thème doit contenir au moins 5 caractères.";
         }
-
-        if (strlen($theme) > 255)
-        {
-            return "Le thème ne doit pas dépasser 255 caractères.";
-        }
         
         return null;
     }

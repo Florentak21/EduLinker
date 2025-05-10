@@ -8,7 +8,7 @@ return (
     function(): PDO {
         $host     = 'localhost';
         $dbname   = 'edu_linker';
-        $username = 'root';
+        $username = '';
         $password = '';
         $charset  = 'utf8mb4';
 
