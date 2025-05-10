@@ -8,8 +8,8 @@ return (
     function(): PDO {
         $host     = 'localhost';
         $dbname   = 'edu_linker';
-        $username = '';
-        $password = '';
+        $username = 'florentak';
+        $password = 'florentak@localHost@2003';
         $charset  = 'utf8mb4';
 
         $dsn = "mysql:host=$host;dbname=$dbname;charset=$charset";

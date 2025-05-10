@@ -66,7 +66,19 @@ class AuthController extends Controller {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['user_role'] = $user['role'];
 
-        $this->redirect('users');
+        if($_SESSION['user_role'] === 'student')
+        {
+            $this->redirect('students');
+        }
+        else if ($_SESSION['user_role'] === 'teacher')
+        {
+            $this->redirect('teachers');
+        }
+        else
+        {
+            $this->redirect('users');
+        }
+
     }
 
     /**
