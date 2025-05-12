@@ -35,8 +35,12 @@ abstract class Controller {
      * 
      * @return void
      */
-    protected function redirect(string $url): void
+    protected function redirect(string $url, array $message = []): void
     {
+        if (!empty($message)) {
+            $_SESSION['success'] = $message['success'] ?? null;
+            $_SESSION['error'] = $message['error'] ?? null;
+        }
         header("Location: /$url");
         exit;
     }

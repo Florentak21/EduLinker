@@ -3,17 +3,17 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Core\Router;
-use App\Traits\PhoneValidator;
+use App\Models\Domain;
 use App\Traits\EmailValidator;
 use App\Traits\LastnameValidator;
 use App\Traits\FirstnameValidator;
 use App\Traits\GenderValidator;
 use App\Traits\PasswordValidator;
+use App\Traits\RoleValidator;
 use App\Models\Teacher;
-use App\Models\Domain;
 
 class TeacherController extends Controller {
-    use PhoneValidator, EmailValidator, LastnameValidator, FirstnameValidator, GenderValidator, PasswordValidator;
+    use EmailValidator, LastnameValidator, FirstnameValidator, GenderValidator, PasswordValidator, RoleValidator;
 
     public function __construct(Router $router)
     {
@@ -28,73 +28,22 @@ class TeacherController extends Controller {
     public function index(): void
     {
         $teachers = Teacher::all();
-        $this->view('teachers/index', ['teachers' => $teachers]);
+        $this->view('admin/teachers/index', [
+            'teachers' => $teachers,
+            'errors' => $_SESSION['errors'] ?? [],
+            'success' => $_SESSION['success'] ?? null
+        ]);
+        unset($_SESSION['errors'], $_SESSION['success']);
     }
 
-    /**
-     * Affiche le formualire de création d'un teacher.
-     * 
-     * @return void
-     */
-    public function create(): void
+    public function dashboard(int $id): void
     {
-        $domains = Domain::all();
-        $this->view('teachers/create', ['domains' => $domains]);
-    }
-
-    /**
-     * Traite le formualire de création d'un teacher.
-     * 
-     * @return void
-     */
-    public function store(): void
-    {
-        $errors = [];
-
-        $lastnameError = $this->validateLastname($_POST['lastname'] ?? '');
-        if ($lastnameError) $errors['lastname'] = $lastnameError;
-
-        $firstnameError = $this->validateFirstname($_POST['firstname'] ?? '');
-        if ($firstnameError) $errors['firstname'] = $firstnameError;
-
-        $genderError = $this->validateGender($_POST['gender'] ?? '');
-        if ($genderError) $errors['gender'] = $genderError;
-
-        $passwordError = $this->validatePassword($_POST['password'] ?? '');
-        if ($passwordError) $errors['password'] = $passwordError;
-
-        $emailError = $this->validateEmail($_POST['email'] ?? '');
-        if ($emailError) $errors['email'] = $emailError;
-
-        $phoneError = $this->validatePhone($_POST['phone'] ?? '');
-        if ($phoneError) $errors['phone'] = $phoneError;
-
-        if (!isset($_POST['domain_id']) || empty($_POST['domain_id'])) {
-            $errors['domain_id'] = 'Le champ domaine est requis.';
-        }
-
-        if (!empty($errors)) {
-            $domains = Domain::all();
-            $this->view('teachers/create', ['domains' => $domains, 'errors' => $errors, 'data' => $_POST]);
-            return;
-        }
-
         $data = [
-            'firstname' => $_POST['firstname'],
-            'lastname' => $_POST['lastname'],
-            'gender' => $_POST['gender'],
-            'email' => $_POST['email'],
-            'phone' => $_POST['phone'],
-            'password' => password_hash($_POST['password'], PASSWORD_DEFAULT),
-            'domain_id' => $_POST['domain_id']
+            'teacher' => Teacher::find($id),
+            'students' => Teacher::getAssignedStudents($id)
         ];
 
-        if (Teacher::create($data)) {
-            $this->redirect('teachers');
-        } else {
-            $domains = Domain::all();
-            $this->view('teachers/create', ['domains' => $domains, 'error' => 'Erreur lors de la création de l’enseignant.']);
-        }
+        $this->view('teachers/dashboard', $data);
     }
 
     /**
@@ -107,77 +56,78 @@ class TeacherController extends Controller {
     public function edit(int $id): void
     {
         $teacher = Teacher::find($id);
+        // dump($teacher);
         if (!$teacher) {
             header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404', []);
+            $this->view('errors/404', [
+                'title' => 'Page non trouvée',
+                'active' => ''
+            ]);
             return;
         }
-        $domains = Domain::all();
-        $this->view('teachers/edit', ['teacher' => $teacher, 'domains' => $domains]);
+
+        $this->view('admin/teachers/edit', [
+            'teacher' => $teacher,
+            'active' => 'teachers',
+            'domains' => Domain::all()
+        ]);
     }
 
     /**
-     * Traite le formulaire d'édition dun teacher.
+     * Traite le formulaire d'édition d'un teacher.
      * 
      * @return void
      */
     public function update(): void
     {
-        $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
-        if ($id <= 0) {
-            header('HTTP/1.1 400 Bad Request');
-            $this->view('errors/400', ['error' => 'ID invalide']);
-            return;
-        }
-
-        $teacher = Teacher::find($id);
+        $teacher = Teacher::find(intval(htmlspecialchars($_POST['id'])));
         if (!$teacher) {
             header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404', []);
+            $this->view('errors/404', [
+                'title' => 'Page non trouvée',
+                'active' => ''
+            ]);
             return;
         }
 
         $errors = [];
 
-        $lastnameError = $this->validateLastname($_POST['lastname'] ?? '');
+        $lastnameError = $this->validateLastname($_POST['lastname']);
         if ($lastnameError) $errors['lastname'] = $lastnameError;
 
-        $firstnameError = $this->validateFirstname($_POST['firstname'] ?? '');
+        $firstnameError = $this->validateFirstname($_POST['firstname']);
         if ($firstnameError) $errors['firstname'] = $firstnameError;
 
-        $genderError = $this->validateGender($_POST['gender'] ?? '');
+        $genderError = $this->validateGender($_POST['gender']);
         if ($genderError) $errors['gender'] = $genderError;
 
-        $emailError = $this->validateEmail($_POST['email'] ?? '', $teacher['user_id']);
+        $emailError = $this->validateEmail($_POST['email'], $teacher['user_id']);
         if ($emailError) $errors['email'] = $emailError;
 
-        $phoneError = $this->validatePhone($_POST['phone'] ?? '', $id);
-        if ($phoneError) $errors['phone'] = $phoneError;
-
-        if (!isset($_POST['domain_id']) || empty($_POST['domain_id'])) {
-            $errors['domain_id'] = 'Le champ domaine est requis.';
-        }
-
         if (!empty($errors)) {
-            $domains = Domain::all();
-            $this->view('teachers/edit', ['teacher' => $teacher, 'domains' => $domains, 'errors' => $errors, 'data' => $_POST]);
+            $this->view('admin/teachers/edit', [
+                'errors' => $errors,
+                'data' => $_POST,
+                'teacher' => $teacher,
+                'domains' => Domain::all(),
+                'title' => 'Modifier un enseignant',
+                'active' => 'teachers'
+            ]);
             return;
         }
 
         $data = [
-            'firstname' => $_POST['firstname'],
-            'lastname' => $_POST['lastname'],
-            'gender' => $_POST['gender'],
-            'email' => $_POST['email'],
-            'phone' => $_POST['phone'],
-            'domain_id' => $_POST['domain_id']
+            'firstname' => htmlspecialchars($_POST['firstname']),
+            'lastname' => htmlspecialchars($_POST['lastname']),
+            'gender' => htmlspecialchars($_POST['gender']),
+            'email'  => htmlspecialchars($_POST['email']),
+            'domain_id' => htmlspecialchars($_POST['domain_id'])
         ];
 
-        if (Teacher::update($id, $data)) {
-            $this->redirect('teachers');
+        if (Teacher::update($teacher['id'], $data)) {
+            $this->redirect('admin/teachers', ['success' => 'Enseignant mis à jour avec succès.']);
         } else {
-            $domains = Domain::all();
-            $this->view('teachers/edit', ['teacher' => $teacher, 'domains' => $domains, 'error' => 'Erreur lors de la mise à jour de l’enseignant.']);
+            $this->redirect('admin/teachers', ['error' => 'Erreur lors de la mise à jour de l\'enseignant.']);
         }
     }
 
@@ -185,16 +135,20 @@ class TeacherController extends Controller {
      * Supprime un teacher.
      * 
      * @param int $id
-     * 
      * @return void
      */
     public function destroy(int $id): void
     {
+        $teacher = Teacher::find($id);
+        if (!$teacher) {
+            $this->redirect('admin/teachers', ['error' => 'Enseignant non trouvé.']);
+            return;
+        }
+
         if (Teacher::delete($id)) {
-            $this->redirect('teachers');
+            $this->redirect('admin/teachers', ['success' => 'Enseignant supprimé avec succès.']);
         } else {
-            $teachers = Teacher::all();
-            $this->view('teachers/index', ['teachers' => $teachers, 'error' => 'Erreur lors de la suppression de l’enseignant.']);
+            $this->redirect('admin/teachers', ['error' => 'Erreur lors de la suppression de l\'enseignant.']);
         }
     }
 }

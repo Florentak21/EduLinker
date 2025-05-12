@@ -14,9 +14,10 @@ class Teacher extends Model {
     public static function all(): array
     {
         $stmt = parent::getPdo()->query("
-            SELECT teachers.*, users.firstname, users.lastname, users.gender, users.email 
+            SELECT teachers.*, users.firstname, users.lastname, users.gender, users.email, domains.code, domains.label
             FROM teachers 
             JOIN users ON teachers.user_id = users.id
+            JOIN domains ON teachers.domain_id = domains.id
         ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -38,6 +39,92 @@ class Teacher extends Model {
         ");
         $stmt->execute([intval($id)]);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+    
+    /**
+     * Recherche des teachers suivant un domaine.
+     * 
+     * @param int $id
+     * 
+     * @return array|null
+     */
+    public static function findByDomains(int $id): ?array
+    {
+        $stmt = parent::getPdo()->prepare("
+            SELECT teachers.*, users.firstname, users.lastname, users.email, domains.code, domains.label
+            FROM teachers 
+            JOIN domains ON teachers.domain_id = domains.id
+            JOIN users ON teachers.user_id = users.id
+            WHERE domains.id = ?
+        ");
+        $stmt->execute([intval($id)]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: null;
+    }
+
+    /**
+     * Permet de récupérer le nombre total de teachers.
+     */
+    public static function count(): int
+    {
+        $stmt = parent::getPdo()->prepare("SELECT COUNT(*) FROM teachers");
+        $stmt->execute();
+        $result = $stmt->fetchColumn();
+        return (int) $result;
+    }
+
+    /**
+     * Permet de récupérer le nombre total de teachers par domaine.
+     */
+    public static function countByDomain(string $domain): int
+    {
+         $stmt = parent::getPdo()->prepare(
+            "SELECT COUNT(*)
+            FROM teachers
+            JOIN domains ON teachers.domain_id = domains.id
+            WHERE domains.code = ?
+        ");
+        $stmt->execute([$domain]);
+        $result = $stmt->fetchColumn();
+        return (int) $result;
+    }
+
+    /**
+     * Compte le nombre d'étudiants qu'un professeur doit encadrer.
+     * 
+     * @param int $id
+     * 
+     * @return int
+     */
+    public static function countAssignedStudents(int $id): int
+    {
+        $stmt = parent::getPdo()->prepare("
+            SELECT COUNT(*)
+            FROM students 
+            WHERE students.teacher_id = ?
+        ");
+        $stmt->execute([$id]);
+        $result = $stmt->fetchColumn();
+        return (int) $result;
+    }
+
+
+    /**
+     * Récupère les étudiants qu'un professeur doit encadrer.
+     * 
+     * @param int $id
+     * 
+     * @return array
+     */
+    public static function getAssignedStudents(int $id): array
+    {
+        $stmt = parent::getPdo()->prepare("
+            SELECT students.*, users.firstname, users.lastname, users.gender, users.email 
+            FROM students 
+            JOIN users ON students.user_id = users.id 
+            WHERE students.teacher_id = ?
+        ");
+        $stmt->execute([intval($id)]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
     /**
@@ -73,18 +160,17 @@ class Teacher extends Model {
         $userId = parent::getPdo()->lastInsertId();
 
         $teacherData = [
-            'phone' => $data['phone'] ?? '',
             'user_id' => $userId,
-            'domain_id' => $data['domain_id'] ?? null
+            'domain_id' => $data['domain_id']
         ];
 
-        if (empty($teacherData['phone']) || empty($teacherData['domain_id'])) {
+        if (empty($teacherData['domain_id'])) {
             return false;
         }
 
         $stmt = parent::getPdo()->prepare("
-            INSERT INTO teachers (phone, user_id, domain_id)
-            VALUES (:phone, :user_id, :domain_id)
+            INSERT INTO teachers (user_id, domain_id)
+            VALUES (:user_id, :domain_id)
         ");
         return $stmt->execute($teacherData);
     }
@@ -94,7 +180,6 @@ class Teacher extends Model {
      * 
      * @param int $id
      * @param array $data
-     * 
      * @return bool
      */
     public static function update(int $id, array $data): bool
@@ -104,12 +189,10 @@ class Teacher extends Model {
             return false;
         }
 
-        /* Mis à jour du teacher dans la table users */
         $userFields = [];
         $userData = [];
-        $userUpdatableFields = ['firstname', 'lastname', 'gender', 'email'];
-
-        foreach ($userUpdatableFields as $field) {
+        $updatableUserFields = ['firstname', 'lastname', 'email', 'gender'];
+        foreach ($updatableUserFields as $field) {
             if (array_key_exists($field, $data)) {
                 $userFields[] = "`$field` = :$field";
                 $userData[$field] = $data[$field];
@@ -119,19 +202,17 @@ class Teacher extends Model {
         if (!empty($userFields)) {
             $userFieldsList = implode(', ', $userFields);
             $userData['id'] = $teacher['user_id'];
-            $userSql = "UPDATE users SET $userFieldsList WHERE id = :id";
-            $userStmt = parent::getPdo()->prepare($userSql);
-            if (!$userStmt->execute($userData)) {
+            $sql = "UPDATE users SET $userFieldsList, updated_at = NOW() WHERE id = :id";
+            $stmt = parent::getPdo()->prepare($sql);
+            if (!$stmt->execute($userData)) {
                 return false;
             }
         }
 
-        /* Mis à jour du teacher dans la table teachers */
         $teacherFields = [];
         $teacherData = [];
-        $teacherUpdatableFields = ['phone', 'domain_id'];
-
-        foreach ($teacherUpdatableFields as $field) {
+        $updatableTeacherFields = ['domain_id'];
+        foreach ($updatableTeacherFields as $field) {
             if (array_key_exists($field, $data)) {
                 $teacherFields[] = "`$field` = :$field";
                 $teacherData[$field] = $data[$field];
@@ -153,12 +234,18 @@ class Teacher extends Model {
      * Supprime un teacher.
      * 
      * @param int $id
-     * 
      * @return bool
      */
     public static function delete(int $id): bool
     {
-        $stmt = parent::getPdo()->prepare("DELETE FROM teachers WHERE id = ?");
-        return $stmt->execute([intval($id)]);
+        $stmt = parent::getPdo()->prepare("SELECT user_id FROM teachers WHERE id = ?");
+        $stmt->execute([intval($id)]);
+        $userId = $stmt->fetchColumn();
+
+        if ($userId === false) {
+            return false;
+        }
+
+        return User::delete($userId);
     }
 }

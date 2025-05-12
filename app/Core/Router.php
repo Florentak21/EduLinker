@@ -22,14 +22,16 @@ class Router {
      * @param string $path
      * @param string $controller
      * @param string $method
+     * @param array $middleware Liste optionnelle de middlewares.
      * 
      * @return void
      */
-    public function get(string $path, string $controller, string $method): void
+    public function get(string $path, string $controller, string $method, array $middleware = []): void
     {
         $this->routes['get'][$path] = [
             'controller' => $controller,
-            'method' => $method
+            'method' => $method,
+            'middleware' => $middleware
         ];
     }
 
@@ -39,14 +41,16 @@ class Router {
      * @param string $path
      * @param string $controller
      * @param string $method
+     * @param array $middleware Liste optionnelle de middlewares.
      * 
      * @return void
      */
-    public function post(string $path, string $controller, string $method): void
+    public function post(string $path, string $controller, string $method, array $middleware = []): void
     {
         $this->routes['post'][$path] = [
             'controller' => $controller,
-            'method' => $method
+            'method' => $method,
+            'middleware' => $middleware
         ];
     }
 
@@ -84,6 +88,7 @@ class Router {
             if ($match) {
                 $controllerClass = $route['controller'];
                 $controllerMethod = $route['method'];
+                $middleware = $route['middleware'] ?? [];
 
                 if (!class_exists($controllerClass)) {
                     throw new \Exception("Controller $controllerClass not found.");
@@ -94,15 +99,29 @@ class Router {
                     throw new \Exception("Method $controllerMethod not found in $controllerClass.");
                 }
 
-                if (!empty($params)) {
-                    return call_user_func_array([$controller, $controllerMethod], array_values($params));
+                // Chaînage des middlewares
+                $next = function () use ($controller, $controllerMethod, $params) {
+                    if (!empty($params)) {
+                        return call_user_func_array([$controller, $controllerMethod], array_values($params));
+                    }
+                    return call_user_func([$controller, $controllerMethod]);
+                };
+
+                // Exécuter les middlewares dans l'ordre inverse
+                foreach (array_reverse($middleware) as $mw) {
+                    if (method_exists($mw, 'handle')) {
+                        $next = function () use ($mw, $next, $params) {
+                            return $mw->handle($next, ...array_values($params));
+                        };
+                    }
                 }
 
-                return call_user_func([$controller, $controllerMethod]);
+                return $next();
             }
         }
 
-        require_once dirname(__DIR__, 1) . DIRECTORY_SEPARATOR . 'views' . DIRECTORY_SEPARATOR . 'errors' . DIRECTORY_SEPARATOR . '404.php';
+        http_response_code(404);
+        require_once dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'views' . DIRECTORY_SEPARATOR . 'errors' . DIRECTORY_SEPARATOR . '404.php';
         exit;
     }
 

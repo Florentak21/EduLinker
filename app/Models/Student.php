@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use App\Core\Model;
@@ -7,7 +6,7 @@ use PDO;
 
 class Student extends Model {
     
-    /**
+   /**
      * Liste tous les students.
      * 
      * @return array
@@ -15,167 +14,133 @@ class Student extends Model {
     public static function all(): array
     {
         $stmt = parent::getPdo()->query("
-            SELECT students.*, users.firstname, users.lastname, users.gender, users.email 
+            SELECT 
+                students.id, 
+                students.matricule, 
+                students.has_binome, 
+                students.matricule_binome, 
+                students.theme, 
+                students.theme_status, 
+                students.cdc, 
+                students.submitted_at, 
+                students.last_reminder_at, 
+                students.assigned_at, 
+                students.user_id, 
+                students.domain_id, 
+                students.teacher_id,
+                users.firstname AS student_firstname, 
+                users.lastname AS student_lastname, 
+                users.gender AS student_gender, 
+                users.email AS student_email,
+                domains.label AS domain_label, 
+                domains.code AS domain_code,
+                users_teacher.firstname AS teacher_firstname, 
+                users_teacher.lastname AS teacher_lastname, 
+                users_teacher.email AS teacher_email
             FROM students 
             JOIN users ON students.user_id = users.id
+            JOIN domains ON students.domain_id = domains.id
+            LEFT JOIN teachers ON students.teacher_id = teachers.id
+            LEFT JOIN users AS users_teacher ON teachers.user_id = users_teacher.id
         ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
-     * Recherche un student grâce à son id.
+     * Recherche un étudiant grâce à son student_id.
      * 
      * @param int $id
-     * 
      * @return array|null
      */
     public static function find(int $id): ?array
     {
         $stmt = parent::getPdo()->prepare("
-            SELECT students.*, users.firstname, users.lastname, users.gender, users.email 
-            FROM students 
-            JOIN users ON students.user_id = users.id 
+            SELECT 
+                students.*,
+                users.firstname AS student_firstname,
+                users.lastname AS student_lastname,
+                users.gender AS student_gender,
+                users.email AS student_email,
+                domains.label AS domain_label,
+                domains.code AS domain_code,
+                users_teacher.firstname AS teacher_firstname,
+                users_teacher.lastname AS teacher_lastname,
+                users_teacher.email AS teacher_email,
+                binome.firstname AS binome_firstname,
+                binome.lastname AS binome_lastname
+            FROM students
+            JOIN users ON students.user_id = users.id
+            JOIN domains ON students.domain_id = domains.id
+            LEFT JOIN teachers ON students.teacher_id = teachers.id
+            LEFT JOIN users AS users_teacher ON teachers.user_id = users_teacher.id
+            LEFT JOIN students AS binome_students ON students.matricule_binome = binome_students.matricule
+            LEFT JOIN users AS binome ON binome_students.user_id = binome.id
             WHERE students.id = ?
         ");
         $stmt->execute([intval($id)]);
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        $student = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+
+        if ($student) {
+            $student['teacher_name'] = $student['teacher_firstname'] 
+                ? trim($student['teacher_firstname'] . ' ' . $student['teacher_lastname']) 
+                : null;
+            $student['binome_name'] = $student['binome_firstname'] 
+                ? trim($student['binome_firstname'] . ' ' . $student['binome_lastname']) 
+                : null;
+        }
+
+        return $student;
     }
 
     /**
-     * Créé un nouvel student.
+     * Recherche un student grâce à son user_id.
      * 
-     * @param array $data
+     * @param int $id
      * 
-     * @return bool
+     * @return array|null
      */
-    public static function create(array $data): bool
+    public static function findByUserId(int $userId): ?array
     {
-        $userData = [
-            'firstname' => $data['firstname'] ?? null,
-            'lastname' => $data['lastname'] ?? null,
-            'gender' => $data['gender'] ?? null,
-            'email' => $data['email'] ?? null,
-            'role' => 'student',
-            'password' => $data['password'] ?? null
-        ];
-
-        if (empty($userData['password'])) {
-            return false;
-        }
-
-        $userStmt = parent::getPdo()->prepare("
-            INSERT INTO users (firstname, lastname, gender, email, role, password)
-            VALUES (:firstname, :lastname, :gender, :email, :role, :password)
-        ");
-        if (!$userStmt->execute($userData)) {
-            return false;
-        }
-
-        $userId = parent::getPdo()->lastInsertId();
-
-        $studentData = [
-            'matricule' => $data['matricule'] ?? '',
-            'phone' => $data['phone'] ?? '',
-            'has_binome' => $data['has_binome'] ?? 0,
-            'matricule_binome' => $data['matricule_binome'] ?? null,
-            'theme' => $data['theme'] ?? null,
-            'theme_status' => $data['theme_status'] ?? 'non-soumis',
-            'cdc' => $data['cdc'] ?? null,
-            'user_id' => $userId,
-            'domain_id' => $data['domain_id'] ?? null,
-            'teacher_id' => $data['teacher_id'] ?? null
-        ];
-
-        if (empty($studentData['matricule']) || empty($studentData['phone']) || empty($studentData['domain_id'])) {
-            return false;
-        }
-
         $stmt = parent::getPdo()->prepare("
-            INSERT INTO students (
-                matricule, phone, has_binome, matricule_binome, theme,
-                theme_status, cdc, user_id, domain_id, teacher_id
-            ) VALUES (
-                :matricule, :phone, :has_binome, :matricule_binome, :theme,
-                :theme_status, :cdc, :user_id, :domain_id, :teacher_id
-            )
+            SELECT 
+                students.*,
+                users.firstname AS student_firstname,
+                users.lastname AS student_lastname,
+                users.gender AS student_gender,
+                users.email AS student_email,
+                domains.label AS domain_label,
+                domains.code AS domain_code,
+                users_teacher.firstname AS teacher_firstname,
+                users_teacher.lastname AS teacher_lastname,
+                users_teacher.email AS teacher_email,
+                binome.firstname AS binome_firstname,
+                binome.lastname AS binome_lastname
+            FROM students
+            JOIN users ON students.user_id = users.id
+            JOIN domains ON students.domain_id = domains.id
+            LEFT JOIN teachers ON students.teacher_id = teachers.id
+            LEFT JOIN users AS users_teacher ON teachers.user_id = users_teacher.id
+            LEFT JOIN students AS binome_students ON students.matricule_binome = binome_students.matricule
+            LEFT JOIN users AS binome ON binome_students.user_id = binome.id
+            WHERE students.user_id = ?
         ");
-        return $stmt->execute($studentData);
+        $stmt->execute([intval($userId)]);
+        $student = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+
+        if ($student) {
+            $student['teacher_name'] = $student['teacher_firstname'] 
+                ? trim($student['teacher_firstname'] . ' ' . $student['teacher_lastname']) 
+                : null;
+                
+            $student['binome_name'] = $student['binome_firstname'] 
+                ? trim($student['binome_firstname'] . ' ' . $student['binome_lastname']) 
+                : null;
+        }
+
+        return $student;
     }
 
-    /**
-     * Met à jour un student existant.
-     * 
-     * @param int $id
-     * @param array $data
-     * 
-     * @return bool
-     */
-    public static function update(int $id, array $data): bool
-    {
-        $student = self::find($id);
-        if (!$student) {
-            return false;
-        }
-
-        /* Mis à jour du students la table users */
-        $userFields = [];
-        $userData = [];
-        $userUpdatableFields = ['firstname', 'lastname', 'gender', 'email'];
-
-        foreach ($userUpdatableFields as $field) {
-            if (array_key_exists($field, $data)) {
-                $userFields[] = "`$field` = :$field";
-                $userData[$field] = $data[$field];
-            }
-        }
-
-        if (!empty($userFields)) {
-            $userFieldsList = implode(', ', $userFields);
-            $userData['id'] = $student['user_id'];
-            $userSql = "UPDATE users SET $userFieldsList WHERE id = :id";
-            $userStmt = parent::getPdo()->prepare($userSql);
-            if (!$userStmt->execute($userData)) {
-                return false;
-            }
-        }
-
-        /* Mis à jour du student dans la table students */
-        $studentFields = [];
-        $studentData = [];
-        $studentUpdatableFields = ['phone', 'has_binome', 'matricule_binome', 'theme', 'theme_status', 'cdc', 'domain_id', 'teacher_id'];
-
-        foreach ($studentUpdatableFields as $field) {
-            if (array_key_exists($field, $data)) {
-                $studentFields[] = "`$field` = :$field";
-                $studentData[$field] = $data[$field];
-            }
-        }
-
-        if (!empty($studentFields)) {
-            $studentFieldsList = implode(', ', $studentFields);
-            $studentData['id'] = $id;
-            $sql = "UPDATE students SET $studentFieldsList, updated_at = NOW() WHERE id = :id";
-            $stmt = parent::getPdo()->prepare($sql);
-            return $stmt->execute($studentData);
-        }
-
-        return true;
-    }
-
-    /**
-     * Supprime un student.
-     * 
-     * @param int $id
-     * 
-     * @return bool
-     */
-    public static function delete(int $id): bool
-    {
-        $stmt = parent::getPdo()->prepare("DELETE FROM students WHERE id = ?");
-        return $stmt->execute([intval($id)]);
-    }
-
-    /**
+        /**
      * Recherche un student grâce à son matricule.
      * 
      * @param string $matricule
@@ -191,33 +156,255 @@ class Student extends Model {
     }
 
     /**
-     * Vérifie un numéro de téléphone déjà existant.
+     * Récupère tous les étudiants avec un statut de thème donné.
      * 
-     * @param string $phone
-     * @param int|null $excludeId
-     * 
-     * @return array|null
+     * @param string $themeStatus
+     * @return array
      */
-    public static function findByPhone(string $phone, ?int $excludeId = null): ?array
+    public static function findByThemeStatus(string $themeStatus): array
     {
-        $sql = "SELECT phone FROM students WHERE phone = :phone";
-        $params = [':phone' => $phone];
-        if ($excludeId !== null) {
-            $sql .= " AND id != :excludeId";
-            $params[':excludeId'] = $excludeId;
-        }
-        $stmt = parent::getPdo()->prepare($sql);
+        $stmt = parent::getPdo()->prepare("
+            SELECT students.*, users.firstname, users.lastname, users.email 
+            FROM students 
+            JOIN users ON students.user_id = users.id 
+            WHERE students.theme_status = ?
+        ");
+        $stmt->execute([$themeStatus]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
-        $unionSql = " UNION SELECT phone FROM teachers WHERE phone = :phone2";
-        if ($excludeId !== null) {
-            $unionSql .= " AND id != :excludeId";
-        }
-        $sql .= $unionSql;
-        $params[':phone2'] = $phone;
+    /**
+     * Permet de récupérer le nombre total de students.
+     */
+    public static function count(): int
+    {
+        $stmt = parent::getPdo()->prepare("SELECT COUNT(*) FROM students");
+        $stmt->execute();
+        $result = $stmt->fetchColumn();
+        return (int) $result;
+    }
 
-        $stmt = parent::getPdo()->prepare($sql);
-        $stmt->execute($params);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result ?: null;
+    /**
+     * Permet de récupérer le nombre total de students par domaine.
+     */
+    public static function countByDomain(string $domain): int
+    {
+        $stmt = parent::getPdo()->prepare(
+            "SELECT COUNT()
+            FROM students
+            JOIN domains ON students.domain_id = domains.id
+            WHERE domains.code = ?
+        ");
+        $stmt->execute([$domain]);
+        $result = $stmt->fetchColumn();
+        return (int) $result;
+    }
+
+    /**
+     * Permet de récupérer le nombre total de thème.
+     * 
+     * @return int
+     */
+    public static function countThemes(): int
+    {
+        $stmt = parent::getPdo()->prepare("SELECT COUNT(DISTINCT theme) FROM students");
+        $stmt->execute();
+        $result = $stmt->fetchColumn();
+        return (int) $result;
+    }
+
+    /**
+     * Permet de compter le nombre de thèmes suivant le statut.
+     * 
+     * @param string $themeStatus
+     * 
+     * @return int
+     */
+    public static function countThemesByStatus(string $themeStatus): int
+    {
+        $stmt = parent::getPdo()->prepare("SELECT COUNT(DISTINCT theme) FROM students WHERE theme_status = ?");
+        $stmt->execute([$themeStatus]);
+        $result = $stmt->fetchColumn();
+        return (int) $result;
+    }
+
+    /**
+     * Retourne les récentes affectations.
+     * 
+     * @param int $limit
+     * 
+     * @return array
+     */
+    public static function getRecentAssignments(): array
+    {
+        $stmt = parent::getPdo()->prepare("
+            SELECT 
+                students.*, 
+                users.firstname AS student_firstname, 
+                users.lastname AS student_lastname, 
+                users.gender AS student_gender, 
+                users.email AS student_email,
+                users_teacher.firstname AS teacher_firstname,
+                users_teacher.lastname AS teacher_lastname
+            FROM students
+            JOIN users ON students.user_id = users.id
+            JOIN teachers ON students.teacher_id = teachers.id
+            JOIN users AS users_teacher ON teachers.user_id = users_teacher.id
+            WHERE students.teacher_id IS NOT NULL
+            ORDER BY students.created_at DESC
+            LIMIT 4
+        ");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /**
+     * Créé un nouvel student.
+     * 
+     * @param array $data
+     * 
+     * @return bool
+     */
+    public static function create(array $data): bool
+    {
+        $userData = [
+            'firstname' => $data['firstname'],
+            'lastname' => $data['lastname'],
+            'gender' => $data['gender'],
+            'email' => $data['email'],
+            'role' => 'student',
+            'password' => $data['password']
+        ];
+
+        $userStmt = parent::getPdo()->prepare("
+            INSERT INTO users (firstname, lastname, gender, email, role, password)
+            VALUES (:firstname, :lastname, :gender, :email, :role, :password)
+        ");
+        if (!$userStmt->execute($userData)) {
+            return false;
+        }
+
+        $userId = parent::getPdo()->lastInsertId();
+
+        $studentData = [
+            'matricule' => $data['matricule'],
+            'has_binome' => 0,
+            'matricule_binome' => null,
+            'theme' => null,
+            'theme_status' => 'non-soumis',
+            'cdc' => null,
+            'submitted_at' => null,
+            'last_reminder_at' => null,
+            'assigned_at' => null,
+            'user_id' => $userId,
+            'domain_id' => $data['domain_id'] ?? null,
+            'teacher_id' => $data['teacher_id'] ?? null
+        ];
+
+        if (empty($studentData['matricule']) || empty($studentData['domain_id'])) {
+            return false;
+        }
+
+        $stmt = parent::getPdo()->prepare("
+            INSERT INTO students (
+                matricule, has_binome, matricule_binome, theme,
+                theme_status, cdc, submitted_at, last_reminder_at, assigned_at, user_id, domain_id, teacher_id
+            ) VALUES (
+                :matricule, :has_binome, :matricule_binome, :theme,
+                :theme_status, :cdc, :submitted_at, :last_reminder_at, :assigned_at, :user_id, :domain_id, :teacher_id
+            )
+        ");
+        return $stmt->execute($studentData);
+    }
+
+    /**
+     * Met à jour un étudiant existant.
+     * 
+     * @param int $id
+     * @param array $data
+     * 
+     * @return bool
+     */
+    public static function update(int $id, array $data): bool
+    {
+        $student = self::find($id);
+        if (!$student) {
+            return false;
+        }
+
+        // Mise à jour de la table users (champs communs)
+        $userFields = [];
+        $userData = [];
+        $updatableUserFields = ['firstname', 'lastname', 'email', 'gender'];
+        foreach ($updatableUserFields as $field) {
+            if (array_key_exists($field, $data)) {
+                $userFields[] = "`$field` = :$field";
+                $userData[$field] = $data[$field];
+            }
+        }
+
+        if (!empty($userFields)) {
+            $userFieldsList = implode(', ', $userFields);
+            $userData['id'] = $student['user_id'];
+            $sql = "UPDATE users SET $userFieldsList, updated_at = NOW() WHERE id = :id";
+            $stmt = parent::getPdo()->prepare($sql);
+            if (!$stmt->execute($userData)) {
+                error_log("Erreur lors de la mise à jour de la table users : " . json_encode($stmt->errorInfo()));
+                return false;
+            }
+        }
+
+        $studentFields = [];
+        $studentData = [];
+        $updatableStudentFields = [
+            'theme',
+            'theme_status',
+            'cdc',
+            'has_binome',
+            'matricule_binome',
+            'submitted_at',
+            'teacher_id',
+            'domain_id',
+            'last_reminder_at',
+            'assigned_at'
+        ];
+        foreach ($updatableStudentFields as $field) {
+            if (array_key_exists($field, $data)) {
+                $studentFields[] = "`$field` = :$field";
+                $studentData[$field] = $data[$field];
+            }
+        }
+
+        if (!empty($studentFields)) {
+            $studentFieldsList = implode(', ', $studentFields);
+            $studentData['id'] = $id;
+            $sql = "UPDATE students SET $studentFieldsList, updated_at = NOW() WHERE id = :id";
+            $stmt = parent::getPdo()->prepare($sql);
+            if (!$stmt->execute($studentData)) {
+                error_log("Erreur lors de la mise à jour de la table students : " . json_encode($stmt->errorInfo()));
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Supprime un student.
+     * 
+     * @param int $id
+     * @return bool
+     */
+    public static function delete(int $id): bool
+    {
+        $stmt = parent::getPdo()->prepare("SELECT user_id FROM students WHERE id = ?");
+        $stmt->execute([intval($id)]);
+        $userId = $stmt->fetchColumn();
+
+        if ($userId === false) {
+            return false;
+        }
+
+        return User::delete($userId);
     }
 }
