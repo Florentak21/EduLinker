@@ -132,6 +132,32 @@
     display: block;
 }
 
+/* Password toggle styles */
+.password-input-container {
+    position: relative;
+    width: 100%;
+}
+.password-input-container input {
+    width: 100%;
+    padding-right: 2.5rem;
+    box-sizing: border-box;
+}
+
+.password-toggle-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-light);
+    cursor: pointer;
+    z-index: 2;
+    font-size: 1rem;
+}
+
+.password-toggle-icon:hover {
+    color: var(--primary-color);
+}
+
 /* Auth Footer */
 .auth-footer {
     margin-top: 1.5rem;

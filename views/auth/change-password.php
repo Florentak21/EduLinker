@@ -28,9 +28,10 @@
     <form action="/profile/update/password" method="POST" class="profile-form">
         <div class="form-group">
             <label for="current_password">Mot de passe actuel *</label>
-            <input type="password" id="current_password" name="current_password" 
-                   class="form-control <?= isset($errors['current_password']) ? 'is-invalid' : '' ?>" 
-                   value="" required>
+            <div class="password-input-container">
+                <input type="password" id="current_password" name="current_password" class="form-control <?= isset($errors['current_password']) ? 'is-invalid' : '' ?>" required>
+                <i class="fas fa-eye password-toggle-icon"></i>
+            </div>
             <?php if (isset($errors['current_password'])): ?>
                 <div class="invalid-feedback"><?= htmlspecialchars($errors['current_password']) ?></div>
             <?php endif; ?>
@@ -38,9 +39,10 @@
 
         <div class="form-group">
             <label for="new_password">Nouveau mot de passe *</label>
-            <input type="password" id="new_password" name="new_password" 
-                   class="form-control <?= isset($errors['new_password']) ? 'is-invalid' : '' ?>" 
-                   value="" required>
+            <div class="password-input-container">
+                <input type="password" id="new_password" name="new_password" class="form-control <?= isset($errors['new_password']) ? 'is-invalid' : '' ?>" required>
+                <i class="fas fa-eye password-toggle-icon"></i>
+            </div>
             <?php if (isset($errors['new_password'])): ?>
                 <div class="invalid-feedback"><?= htmlspecialchars($errors['new_password']) ?></div>
             <?php endif; ?>
@@ -48,9 +50,10 @@
 
         <div class="form-group">
             <label for="password_confirmation">Confirmer le nouveau mot de passe *</label>
-            <input type="password" id="password_confirmation" name="password_confirmation" 
-                   class="form-control <?= isset($errors['password_confirmation']) ? 'is-invalid' : '' ?>" 
-                   value="" required>
+            <div class="password-input-container">
+                <input type="password" id="password_confirmation" name="password_confirmation" class="form-control <?= isset($errors['password_confirmation']) ? 'is-invalid' : '' ?>" required>
+                <i class="fas fa-eye password-toggle-icon"></i>
+            </div>
             <?php if (isset($errors['password_confirmation'])): ?>
                 <div class="invalid-feedback"><?= htmlspecialchars($errors['password_confirmation']) ?></div>
             <?php endif; ?>

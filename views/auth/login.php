@@ -34,7 +34,10 @@
         
         <div class="form-group">
             <label for="password">Mot de passe</label>
-            <input type="password" id="password" name="password" class="form-control <?= isset($errors['password']) ? 'is-invalid' : '' ?>" required>
+            <div class="password-input-container">
+                <input type="password" id="password" name="password" class="form-control <?= isset($errors['password']) ? 'is-invalid' : '' ?>" required>
+                <i class="fas fa-eye password-toggle-icon"></i>
+            </div>
             <?php if (isset($errors['password'])): ?>
                 <div class="invalid-feedback"><?= htmlspecialchars($errors['password']) ?></div>
             <?php endif; ?>
