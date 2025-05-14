@@ -14,7 +14,7 @@ class Domain extends Model {
     public static function all(): array
     {
         $stmt = parent::getPdo()->query("
-            SELECT 
+            SELECT
                 domains.id,
                 domains.label,
                 domains.code,
@@ -23,8 +23,22 @@ class Domain extends Model {
                 (SELECT COUNT(*) FROM students WHERE students.domain_id = domains.id) AS student_count,
                 (SELECT COUNT(*) FROM teachers WHERE teachers.domain_id = domains.id) AS teacher_count
             FROM domains
+            ORDER BY {student_count+teacher_count} DESC
         ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Permet de récupérer le nombre total de domaine.
+     * 
+     * @return int
+     */
+    public static function count(): int
+    {
+        $stmt = parent::getPdo()->prepare("SELECT COUNT(*) FROM domains");
+        $stmt->execute();
+        $result = $stmt->fetchColumn();
+        return (int) $result;
     }
 
     /**
@@ -96,19 +110,6 @@ class Domain extends Model {
                 WHERE id = :id";
         $stmt = parent::getPdo()->prepare($sql);
         return $stmt->execute($data);
-    }
-
-    /**
-     * Permet de récupérer le nombre total de domaine.
-     * 
-     * @return int
-     */
-    public static function count(): int
-    {
-        $stmt = parent::getPdo()->prepare("SELECT COUNT(*) FROM domains");
-        $stmt->execute();
-        $result = $stmt->fetchColumn();
-        return (int) $result;
     }
 
     /**

@@ -45,6 +45,9 @@ $content = ob_start();
                     <td><?= Teacher::countAssignedStudents($teacher['id']) ?? 0 ?></td>
                     <td>
                         <div class="action-buttons">
+                            <a href="/admin/teachers/<?= $teacher['id'] ?>/domains" class="btn btn-sm btn-outline" title="Domaines">
+                                <i class="fas fa-edit"></i>
+                            </a>
                             <a href="/admin/teachers/edit/<?= $teacher['id'] ?>" class="btn btn-sm btn-outline" title="Modifier">
                                 <i class="fas fa-edit"></i>
                             </a>

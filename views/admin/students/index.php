@@ -55,19 +55,9 @@
                     </td>
                     <td>
                         <div class="action-buttons">
-                            <?php if ($student['theme_status'] === 'en-traitement'): ?>
-                                <a href="/admin/validate-theme/<?= $student['id'] ?>" class="btn btn-sm btn-success" title="Valider le thème">
-                                    <i class="fas fa-check"></i>
-                                </a>
-                                <a href="/admin/cancel-theme/<?= $student['id'] ?>" class="btn btn-sm btn-warning" title="Annuler le thème"
-                                   onclick="return confirm('Êtes-vous sûr de vouloir annuler ce thème ?')">
-                                    <i class="fas fa-times"></i>
-                                </a>
-                            <?php elseif ($student['theme_status'] === 'validé' && !$student['teacher_id']): ?>
-                                <a href="/admin/assign-supervisor/<?= $student['id'] ?>" class="btn btn-sm btn-info" title="Affecter un encadreur">
-                                    <i class="fas fa-user-tie"></i>
-                                </a>
-                            <?php endif; ?>
+                            <a href="/admin/students/show-theme/<?= $student['id'] ?>" class="btn btn-sm btn-outline" title="Thème">
+                                <i class="fas fa-edit"></i>
+                            </a>
                             <a href="/admin/students/edit/<?= $student['id'] ?>" class="btn btn-sm btn-outline" title="Modifier">
                                 <i class="fas fa-edit"></i>
                             </a>

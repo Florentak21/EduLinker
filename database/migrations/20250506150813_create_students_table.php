@@ -24,6 +24,7 @@ final class CreateStudentsTable extends AbstractMigration
             ->addColumn('has_binome', 'boolean', ['default' => false, 'null' => false])
             ->addColumn('matricule_binome', 'string',  ['limit' => 20, 'null' => true])
             ->addColumn('theme', 'text', ['null' => true])
+            ->addColumn('description', 'text', ['null' => true])
             ->addColumn('theme_status', 'enum',['values' => ['non-soumis', 'en-traitement', 'rejete', 'valide'],'default' => 'non-soumis', 'null' => false])
             ->addColumn('cdc', 'string', ['limit' => 255, 'null' => true])
             ->addColumn('user_id', 'integer',['signed' => false, 'null' => false])

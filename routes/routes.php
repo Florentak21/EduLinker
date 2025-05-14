@@ -51,16 +51,16 @@ $app->router->post('admin/users/update', UserController::class, 'update', [new A
 $app->router->get('admin/users/destroy/{id}', UserController::class, 'destroy', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
 
 /* Routes permettant à l'admin de gérer les students */
+$app->router->get('admin/students', StudentController::class, 'index', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
 $app->router->get('admin/students/edit/{id}', StudentController::class, 'edit', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
 $app->router->post('admin/students/update', StudentController::class, 'update', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
-$app->router->get('admin/students', StudentController::class, 'index', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
 $app->router->get('admin/students/destroy/{id}', StudentController::class, 'destroy', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
 
 /* Routes permettant à l'admin de gérer les thèmes des students */
-$app->router->get('admin/validate-theme/{studentId}', AdminController::class, 'validateTheme', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
-$app->router->post('admin/validate-theme/{studentId}', AdminController::class, 'validateTheme', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
-$app->router->get('admin/cancel-theme/{studentId}', AdminController::class, 'cancelTheme', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
-$app->router->post('admin/cancel-theme/{studentId}', AdminController::class, 'cancelTheme', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
+$app->router->get('admin/students/show-theme/{studentId}', AdminController::class, 'showTheme', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
+$app->router->get('admin/students/validate-theme-form/{studentId}', AdminController::class, 'validateThemeForm', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
+$app->router->post('admin/students/validate-theme', AdminController::class, 'validateThemeProcess', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
+$app->router->post('admin/students/cancel-theme', AdminController::class, 'cancelTheme', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
 
 /* Routes permettant à l'admin de gérer les teachers */
 $app->router->get('admin/teachers', TeacherController::class, 'index', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
@@ -68,6 +68,12 @@ $app->router->get('admin/teachers/edit/{id}', TeacherController::class, 'edit', 
 $app->router->post('admin/teachers/update', TeacherController::class, 'update', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
 $app->router->post('admin/teachers/store', TeacherController::class, 'store', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
 $app->router->get('admin/teachers/destroy/{id}', TeacherController::class, 'destroy', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
+
+/* Routes permettant à l'admin de rajouter/supprimer des domaines aux teachers */
+$app->router->get('admin/teachers/{id}/domains', TeacherController::class, 'showMyDomains', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
+$app->router->get('admin/teachers/{id}/domains/add', TeacherController::class, 'showOtherDomains', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
+$app->router->get('admin/teachers/{id}/domains/store', TeacherController::class, 'addDomain', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
+$app->router->post('admin/teachers/{id}/domains/remove/{id}', TeacherController::class, 'removeDomain', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
 
 /* Routes permettant à l'admin de gérer les domaines */
 $app->router->get('admin/domains', DomainController::class, 'index', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);

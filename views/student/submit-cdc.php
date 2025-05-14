@@ -36,6 +36,15 @@
                     <div class="invalid-feedback"><?= htmlspecialchars($errors['theme']) ?></div>
                 <?php endif; ?>
             </div>
+            <div class="form-group">
+                <label for="description">Description du thème *</label>
+                <textarea name="description" id="description" class="form-control <?= isset($errors['description']) ? 'is-invalid' : '' ?>" required>
+                    <?= htmlspecialchars($data['description'] ?? '') ?>
+                </textarea>
+                <?php if (isset($errors['description'])): ?>
+                    <div class="invalid-feedback"><?= htmlspecialchars($errors['description']) ?></div>
+                <?php endif; ?>
+            </div>
             
             <div class="form-group">
                 <label>Travaillez-vous en binôme ? *</label>

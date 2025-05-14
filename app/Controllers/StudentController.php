@@ -88,7 +88,8 @@ class StudentController extends Controller {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors = [];
 
-            $errors['theme'] = $this->validateTheme($_POST['theme'] ?? '');
+            $errors['theme'] = $this->validateTheme('thème', $_POST['theme'] ?? '');
+            $errors['description'] = $this->validateTheme('description', $_POST['description'] ?? '');
             $errors['cdc_file'] = $this->validateCdc($_FILES['cdc_file'] ?? []);
             $hasBinome = isset($_POST['has_binome']) && $_POST['has_binome'] === '1';
             if (!isset($_POST['has_binome']) || !in_array($_POST['has_binome'], ['0', '1'])) {
@@ -123,6 +124,7 @@ class StudentController extends Controller {
             if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
                 $data = [
                     'theme' => htmlspecialchars($_POST['theme']),
+                    'description' => htmlspecialchars($_POST['description']),
                     'theme_status' => 'en-traitement',
                     'cdc' => $fileName,
                     'has_binome' => $hasBinome ? 1 : 0,
@@ -139,6 +141,7 @@ class StudentController extends Controller {
                             $binome = Student::findByMatricule(htmlspecialchars(($_POST['matricule_binome'])));
                             $data = [
                                 'theme' => htmlspecialchars($_POST['theme']),
+                                'description' => htmlspecialchars($_POST['description']),
                                 'theme_status' => 'en-traitement',
                                 'cdc' => $fileName,
                                 'has_binome' => 1,
@@ -250,7 +253,7 @@ class StudentController extends Controller {
     }
 
     /**
-     * Traite le formulaire d'édition d'un teacher.
+     * Traite le formulaire d'édition d'un student.
      * 
      * @return void
      */

@@ -10,18 +10,18 @@ trait ThemeValidator {
      * 
      * @return string|null
      */
-    public function validateTheme(string $theme): ?string
+    public function validateTheme(string $field, $value): ?string
     {
-        $theme = trim($theme);
+        $value = trim($value);
 
-        if (empty($theme))
+        if (empty($value))
         {
-            return "Le thème est requis.";
+            return "Le champ $field est requis.";
         }
 
-        if (strlen($theme) < 5)
+        if (strlen($value) < 5)
         {
-            return "Le thème doit contenir au moins 5 caractères.";
+            return "Le champ $field doit contenir au moins 5 caractères.";
         }
         
         return null;

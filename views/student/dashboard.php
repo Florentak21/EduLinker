@@ -51,7 +51,7 @@
                     <i class="fas fa-chalkboard-teacher"></i>
                 </div>
                 <div class="details">
-                    <h3><?= htmlspecialchars($student['teacher_name'] ?? 'N/A') ?></h3>
+                    <h3><?= htmlspecialchars($student['teacher_firstname'] . ' ' . $student['teacher_lastname'] ?? 'N/A') ?></h3>
                     <p><?= htmlspecialchars($student['teacher_email'] ?? 'N/A') ?></p>
                 </div>
             </div>
@@ -74,22 +74,24 @@
                 <div class="detail-item">
                     <label>Thème :</label>
                     <p><?= htmlspecialchars($student['theme']) ?></p>
+                    <label>Description :</label>
+                    <p><?= htmlspecialchars($student['description']) ?></p>
                 </div>
                 
-                <?php if (isset($student['has_binome']) && $student['has_binome'] && isset($student['matricule_binome'])): ?>
-                <div class="detail-item">
-                    <label>Binôme :</label>
-                    <p><?= htmlspecialchars($student['binome_name'] ?? $student['matricule_binome']) ?></p>
-                </div>
+                <?php if ($student['has_binome'] && !empty($student['matricule_binome'])): ?>
+                    <div class="detail-item">
+                        <label>Binôme :</label>
+                        <p><?= htmlspecialchars($student['binome_firstname'] . ' ' . $student['binome_lastname'])?></p>
+                    </div>
                 <?php endif; ?>
                 
                 <?php if (isset($student['cdc'])): ?>
-                <div class="detail-item">
-                    <label>CDC :</label>
-                    <a href="/storage/<?= htmlspecialchars($student['cdc']) ?>" download class="file-link">
-                        <i class="fas fa-file-pdf"></i> Télécharger
-                    </a>
-                </div>
+                    <div class="detail-item">
+                        <label>CDC :</label>
+                        <a href="/storage/<?= htmlspecialchars($student['cdc']) ?>" download class="file-link">
+                            <i class="fas fa-file-pdf"></i> Télécharger
+                        </a>
+                    </div>
                 <?php endif; ?>
             <?php else: ?>
                 <div class="no-thesis">

@@ -20,6 +20,7 @@ class Student extends Model {
                 students.has_binome, 
                 students.matricule_binome, 
                 students.theme, 
+                students.description, 
                 students.theme_status, 
                 students.cdc, 
                 students.submitted_at, 
@@ -67,7 +68,9 @@ class Student extends Model {
                 users_teacher.lastname AS teacher_lastname,
                 users_teacher.email AS teacher_email,
                 binome.firstname AS binome_firstname,
-                binome.lastname AS binome_lastname
+                binome.lastname AS binome_lastname,
+                binome.email AS binome_email,
+                binome.created_at AS binome_created_at
             FROM students
             JOIN users ON students.user_id = users.id
             JOIN domains ON students.domain_id = domains.id
@@ -79,15 +82,6 @@ class Student extends Model {
         ");
         $stmt->execute([intval($id)]);
         $student = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
-
-        if ($student) {
-            $student['teacher_name'] = $student['teacher_firstname'] 
-                ? trim($student['teacher_firstname'] . ' ' . $student['teacher_lastname']) 
-                : null;
-            $student['binome_name'] = $student['binome_firstname'] 
-                ? trim($student['binome_firstname'] . ' ' . $student['binome_lastname']) 
-                : null;
-        }
 
         return $student;
     }
@@ -126,17 +120,6 @@ class Student extends Model {
         ");
         $stmt->execute([intval($userId)]);
         $student = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
-
-        if ($student) {
-            $student['teacher_name'] = $student['teacher_firstname'] 
-                ? trim($student['teacher_firstname'] . ' ' . $student['teacher_lastname']) 
-                : null;
-                
-            $student['binome_name'] = $student['binome_firstname'] 
-                ? trim($student['binome_firstname'] . ' ' . $student['binome_lastname']) 
-                : null;
-        }
-
         return $student;
     }
 
@@ -180,22 +163,6 @@ class Student extends Model {
     {
         $stmt = parent::getPdo()->prepare("SELECT COUNT(*) FROM students");
         $stmt->execute();
-        $result = $stmt->fetchColumn();
-        return (int) $result;
-    }
-
-    /**
-     * Permet de récupérer le nombre total de students par domaine.
-     */
-    public static function countByDomain(string $domain): int
-    {
-        $stmt = parent::getPdo()->prepare(
-            "SELECT COUNT()
-            FROM students
-            JOIN domains ON students.domain_id = domains.id
-            WHERE domains.code = ?
-        ");
-        $stmt->execute([$domain]);
         $result = $stmt->fetchColumn();
         return (int) $result;
     }
@@ -291,6 +258,7 @@ class Student extends Model {
             'has_binome' => 0,
             'matricule_binome' => null,
             'theme' => null,
+            'description' => null,
             'theme_status' => 'non-soumis',
             'cdc' => null,
             'submitted_at' => null,
@@ -307,10 +275,10 @@ class Student extends Model {
 
         $stmt = parent::getPdo()->prepare("
             INSERT INTO students (
-                matricule, has_binome, matricule_binome, theme,
+                matricule, has_binome, matricule_binome, theme, description,
                 theme_status, cdc, submitted_at, last_reminder_at, assigned_at, user_id, domain_id, teacher_id
             ) VALUES (
-                :matricule, :has_binome, :matricule_binome, :theme,
+                :matricule, :has_binome, :matricule_binome, :theme, :description,
                 :theme_status, :cdc, :submitted_at, :last_reminder_at, :assigned_at, :user_id, :domain_id, :teacher_id
             )
         ");
@@ -329,6 +297,7 @@ class Student extends Model {
     {
         $student = self::find($id);
         if (!$student) {
+            error_log("Étudiant ID $id non trouvé.");
             return false;
         }
 
@@ -358,6 +327,7 @@ class Student extends Model {
         $studentData = [];
         $updatableStudentFields = [
             'theme',
+            'description',
             'theme_status',
             'cdc',
             'has_binome',
@@ -379,6 +349,11 @@ class Student extends Model {
             $studentFieldsList = implode(', ', $studentFields);
             $studentData['id'] = $id;
             $sql = "UPDATE students SET $studentFieldsList, updated_at = NOW() WHERE id = :id";
+            
+            // Débogage : afficher la requête SQL et les paramètres
+            error_log("Requête SQL : $sql");
+            error_log("Paramètres : " . json_encode($studentData));
+
             $stmt = parent::getPdo()->prepare($sql);
             if (!$stmt->execute($studentData)) {
                 error_log("Erreur lors de la mise à jour de la table students : " . json_encode($stmt->errorInfo()));

@@ -1,4 +1,4 @@
-<?php $content = ob_start();?>
+<?php $content = ob_start(); ?>
 
 <div class="dashboard-grid">
     
@@ -35,7 +35,7 @@
                 <div class="stat-label">Thèmes rejetés</div>
             </div>
             <div class="stat-item">
-                <div class="stat-value"><?= $data['domains'] ?? 0 ?></div>
+                <div class="stat-value"><?= $data['domains']['domains_count'] ?? 0 ?></div>
                 <div class="stat-label">Domaines</div>
             </div>
         </div>
@@ -79,7 +79,7 @@
     <div class="card domains-card">
         <h2>Domaines les plus actifs</h2>
         <div class="domains-list">
-            <?php foreach ($activeDomains as $domain): ?>
+            <?php foreach ($data['domains']['domains_items'] as $domain): ?>
             <div class="domain-item">
                 <div class="domain-info">
                     <h3><?= htmlspecialchars($domain['label']) ?></h3>

@@ -73,22 +73,6 @@ class Teacher extends Model {
     }
 
     /**
-     * Permet de récupérer le nombre total de teachers par domaine.
-     */
-    public static function countByDomain(string $domain): int
-    {
-         $stmt = parent::getPdo()->prepare(
-            "SELECT COUNT(*)
-            FROM teachers
-            JOIN domains ON teachers.domain_id = domains.id
-            WHERE domains.code = ?
-        ");
-        $stmt->execute([$domain]);
-        $result = $stmt->fetchColumn();
-        return (int) $result;
-    }
-
-    /**
      * Compte le nombre d'étudiants qu'un professeur doit encadrer.
      * 
      * @param int $id
@@ -125,6 +109,94 @@ class Teacher extends Model {
         ");
         $stmt->execute([intval($id)]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /**
+     * Récupère tous les domaines associés à un enseignant (via son user_id).
+     * 
+     * @param int $userId L'ID de l'utilisateur associé à l'enseignant
+     * @return array
+     */
+    public static function getDomainsByTeacher(int $userId): array
+    {
+        $stmt = parent::getPdo()->prepare("
+            SELECT domains.code, domains.label
+            FROM teachers 
+            JOIN domains ON teachers.domain_id = domains.id 
+            WHERE teachers.user_id = ?
+        ");
+        $stmt->execute([intval($userId)]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /**
+     * Récupère tous les domaines sauf ceux déjà associés à l'enseignant (via son user_id).
+     * 
+     * @param int $userId L'ID de l'utilisateur associé à l'enseignant
+     * @return array
+     */
+    public static function getDomainsWithoutMine(int $userId): array
+    {
+        $stmt = parent::getPdo()->prepare("
+            SELECT domains.*
+            FROM domains
+            WHERE domains.id NOT IN (
+                SELECT domain_id 
+                FROM teachers 
+                WHERE teachers.user_id = ?
+            )
+        ");
+        $stmt->execute([intval($userId)]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /**
+     * Rajoutte un domain à un teacher.
+     * 
+     * @param int $id
+     * @param int $domain_id
+     * 
+     * @return [type]
+     */
+    public static function addDomain(int $userId, int $domainId): bool
+    {
+        $checkStmt = parent::getPdo()->prepare("
+            SELECT COUNT(*) 
+            FROM teachers 
+            WHERE user_id = ? AND domain_id = ?
+        ");
+        $checkStmt->execute([intval($userId), intval($domainId)]);
+        if ($checkStmt->fetchColumn() > 0) {
+            return false;
+        }
+
+        $stmt = parent::getPdo()->prepare("
+            INSERT INTO teachers (user_id, domain_id)
+            VALUES (:user_id, :domain_id)
+        ");
+        return $stmt->execute([
+            ':user_id' => $userId,
+            ':domain_id' => $domainId
+        ]);
+    }
+
+    /**
+     * Supprime un domaine associé à un enseignant (via son user_id).
+     * 
+     * @param int $userId L'ID de l'utilisateur associé à l'enseignant
+     * @param int $domainId L'ID du domaine à supprimer
+     * @return bool
+     */
+    public static function removeDomain(int $userId, int $domainId): bool
+    {
+        $stmt = parent::getPdo()->prepare("
+            DELETE FROM teachers
+            WHERE user_id = :user_id AND domain_id = :domain_id
+        ");
+        return $stmt->execute([
+            ':user_id' => $userId,
+            ':domain_id' => $domainId
+        ]);
     }
 
     /**
