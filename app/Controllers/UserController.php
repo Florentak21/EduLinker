@@ -111,7 +111,7 @@ class UserController extends Controller {
 
         if (!isset($_POST['password_confirmation']) || empty($_POST['password_confirmation'])) {
             $errors['password_confirmation'] = "Veuillez confirmer le mot de passe.";
-        } else if (!empty($_POST['password_confirmation']) && $_POST['password'] !== $_POST['password_confirmation']) {
+        } elseif (!empty($_POST['password_confirmation']) && $_POST['password'] !== $_POST['password_confirmation']) {
             $errors['password_confirmation'] = "Les mots de passe ne correspondent pas.";
         }
 
@@ -132,8 +132,13 @@ class UserController extends Controller {
         /* Création du user suivant son rôle */
         $created = false;
         if ($_POST['role'] === 'student') {
+            
             /* Génération du matricule basé sur le domaine d'étude du student. */
             $domain = Domain::find($_POST['domain_id']);
+            if (!$domain) {
+                $this->redirect('admin/users/create', ['error' => 'Domaine non trouvé.']);
+                return;
+            }
             $matricule = $this->generateMatricule($domain['code']);
 
             $data = [
@@ -178,11 +183,7 @@ class UserController extends Controller {
     {
         $user = User::find($id);
         if (!$user) {
-            header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404', [
-                'title' => 'Page non trouvée',
-                'active' => ''
-            ]);
+            $this->redirect('error/404', ['message' => 'Utilisateur non trouvé.']);
             return;
         }
         $this->view('admin/users/edit', [
@@ -201,22 +202,13 @@ class UserController extends Controller {
     {
         $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
         if ($id <= 0) {
-            header('HTTP/1.1 400 Bad Request');
-            $this->view('errors/400', [
-                'error' => 'ID invalide',
-                'title' => 'Requête invalide',
-                'active' => ''
-            ]);
+            $this->redirect('error/400', ['message' => 'ID invalide']);
             return;
         }
 
         $user = User::find($id);
         if (!$user) {
-            header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404', [
-                'title' => 'Page non trouvée',
-                'active' => ''
-            ]);
+            $this->redirect('error/404', ['message' => 'Utilisateur non trouvé.']);
             return;
         }
 

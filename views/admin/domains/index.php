@@ -1,7 +1,21 @@
 <?php $content = ob_start(); ?>
 <div class="card">
+
+    <!-- Affichage des messages depuis la redirection -->
+    <?php if (isset($_SESSION['error'])): ?>
+        <div class="alert error">
+            <i class="fas fa-exclamation-circle"></i>
+            <?= htmlspecialchars($_SESSION['error']) ?>
+        </div>
+    <?php endif; ?>
+    <?php if (isset($_SESSION['success'])): ?>
+        <div class="alert success">
+            <i class="fas fa-check-circle"></i>
+            <?= htmlspecialchars($_SESSION['success']) ?>
+        </div>
+    <?php endif; ?>
+
     <div class="card-header">
-        
         <a href="/admin/domains/create" class="btn btn-primary">
             <i class="fas fa-plus"></i> Ajouter un domaine
         </a>
@@ -58,6 +72,7 @@
 </div>
 
 <?php
+unset($_SESSION['error'], $_SESSION['success']);
 $content = ob_get_clean();
 require_once dirname(__DIR__, 2) . '/layouts/admin.php';
 ?>

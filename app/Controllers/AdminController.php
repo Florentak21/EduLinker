@@ -13,6 +13,7 @@ use Exception;
 
 class AdminController extends Controller {
     use ThemeValidator;
+
     public function __construct(Router $router)
     {
         parent::__construct($router);
@@ -35,7 +36,7 @@ class AdminController extends Controller {
             'recent_assignments' => Student::getRecentAssignments()
         ];
 
-        return $this->view('admin/dashboard', [
+        $this->view('admin/dashboard', [
             'data' => $data,
             'title' => 'Tableau de bord',
         ]);
@@ -45,8 +46,7 @@ class AdminController extends Controller {
     {
         $student = Student::find($studentId);
         if (!$student) {
-            header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404', ['error' => 'Étudiant non trouvé.']);
+            $this->redirect('error/404', ['message' => 'Étudiant non trouvé.']);
             return;
         }
 
@@ -66,8 +66,7 @@ class AdminController extends Controller {
     {
         $student = Student::find($studentId);
         if (!$student) {
-            header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404', ['error' => 'Étudiant non trouvé.']);
+            $this->redirect('error/404', ['message' => 'Étudiant non trouvé.']);
             return;
         }
 
@@ -93,8 +92,7 @@ class AdminController extends Controller {
     {
         $student = Student::find(htmlspecialchars($_POST['student_id'] ?? ''));
         if (!$student) {
-            header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404', ['error' => 'Étudiant non trouvé.']);
+            $this->redirect('error/404', ['message' => 'Étudiant non trouvé.']);
             return;
         }
 
@@ -108,12 +106,10 @@ class AdminController extends Controller {
             $errors = [];
             $data = [];
 
-            // Récupérer et nettoyer les données du formulaire
             $data['theme'] = htmlspecialchars(trim($_POST['theme'] ?? ''));
             $data['description'] = htmlspecialchars(trim($_POST['description'] ?? ''));
             $teacherId = isset($_POST['teacher_id']) ? intval(htmlspecialchars($_POST['teacher_id'])) : null;
 
-            // Validation
             if (!$teacherId) {
                 $errors['teacher_id'] = 'Veuillez sélectionner un encadreur.';
             } else {
@@ -125,12 +121,7 @@ class AdminController extends Controller {
             $errors['theme'] = $this->validateTheme('theme', $data['theme']);
             $errors['description'] = $this->validateTheme('description', $data['description']);
 
-            // Nettoyer les erreurs vides
             $errors = array_filter($errors);
-
-            // Débogage : vérifier les données soumises
-            error_log("Données soumises : " . json_encode($data));
-            error_log("Erreurs détectées : " . json_encode($errors));
 
             if (!empty($errors)) {
                 $teachers = Teacher::findByDomains($student['domain_id']);
@@ -152,8 +143,6 @@ class AdminController extends Controller {
                 'teacher_id' => $teacherId
             ];
 
-            // Débogage : vérifier les données à mettre à jour
-            error_log("Données pour mise à jour (ID {$student['id']}) : " . json_encode($updateData));
 
             // Mettre à jour l'étudiant principal
             try {
@@ -178,7 +167,7 @@ class AdminController extends Controller {
                     $this->view('admin/students/validate-theme', [
                         'student' => $student,
                         'teachers' => $teachers,
-                        'errors' => ['general' => 'Erreur lors de la validation du thème : ' . ($errorInfo[2] ?? 'Erreur inconnue')],
+                        'errors' => ['general' => 'Erreur lors de la validation du thème : erreur inconnue'],
                         'data' => $data,
                         'title' => 'Validation de thème'
                     ]);
@@ -188,7 +177,7 @@ class AdminController extends Controller {
                 $this->view('admin/students/validate-theme', [
                     'student' => $student,
                     'teachers' => $teachers,
-                    'errors' => ['general' => 'Erreur lors de la validation du thème : '],
+                    'errors' => ['general' => 'Erreur lors de la validation du thème : ' . $e->getMessage()],
                     'data' => $data,
                     'title' => 'Validation de thème'
                 ]);
@@ -204,30 +193,23 @@ class AdminController extends Controller {
      */
     public function cancelTheme(): void
     {
-        // Traitement du formulaire de rejet de theme
+        // Traitement du formulaire de rejet de thème
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('HTTP/1.1 400 Bad Request');
-            $this->view('errors/400', [
-                'title' => 'Méthode non supportée',
-                'active' => ''
-            ]);
+            $this->redirect('error/400', ['message' => 'Méthode non supportée']);
             return;
         }
 
-        if(!isset($_POST['student_id']) || empty($_POST['student_id'])){
-            $this->redirect('admin/students', [
-                'error' => 'Impossible de rejeter le thème.'
-            ]);
-        } else {
-            $student = Student::find(htmlspecialchars($_POST['student_id']));
-            if (!$student) {
-                header('HTTP/1.1 404 Not Found');
-                $this->view('errors/404', ['error' => 'Étudiant non trouvé.']);
-                return;
-            }
+        if (!isset($_POST['student_id']) || empty($_POST['student_id'])) {
+            $this->redirect('admin/students', ['error' => 'Impossible de rejeter le thème.']);
+            return;
         }
 
-        // Vérifier si le thème peut être annulé
+        $student = Student::find(htmlspecialchars($_POST['student_id']));
+        if (!$student) {
+            $this->redirect('error/404', ['message' => 'Étudiant non trouvé.']);
+            return;
+        }
+
         if ($student['theme_status'] === 'non-soumis') {
             $this->redirect('admin/students', ['error' => 'Le thème est déjà rejeté ou non soumis.']);
             return;
@@ -247,7 +229,7 @@ class AdminController extends Controller {
         $data = [
             'theme_status' => 'non-soumis',
             'theme' => null,
-            'description',
+            'description' => null,
             'cdc' => null,
             'has_binome' => 0,
             'matricule_binome' => null,

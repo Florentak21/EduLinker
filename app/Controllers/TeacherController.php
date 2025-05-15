@@ -42,8 +42,14 @@ class TeacherController extends Controller {
      */
     public function dashboard(int $id): void
     {
+        $teacher = Teacher::find($id);
+        if (!$teacher) {
+            $this->redirect('error/404', ['message' => 'Enseignant non trouvé.']);
+            return;
+        }
+
         $data = [
-            'teacher' => Teacher::find($id),
+            'teacher' => $teacher,
             'students' => Teacher::getAssignedStudents($id)
         ];
 
@@ -53,22 +59,22 @@ class TeacherController extends Controller {
     /**
      * Affiche tous les domaines d'un enseignant spécifique (via son user_id).
      * 
-     * @param int $teacherId
+     * @param int $userId
      * 
      * @return void
      */
-    public function showMyDomains(int $teacherId): void
+    public function showMyDomains(int $userId): void
     {
-        $teacher = Teacher::find($teacherId);
+        $teacher = Teacher::findByUserId($userId);
         if (!$teacher) {
-            header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404', ['error' => 'Enseignant non trouvé.']);
+            $this->redirect('error/404', ['message' => 'Enseignant non trouvé.']);
             return;
         }
 
+        $domains = Teacher::getDomainsByTeacher($userId);
         $this->view('admin/teachers/show-domains', [
             'teacher' => $teacher,
-            'domains' => Teacher::getDomainsByTeacher($teacher['user_id'])
+            'domains' => $domains,
         ]);
     }
 
@@ -81,38 +87,35 @@ class TeacherController extends Controller {
      */
     public function showOtherDomains(int $teacherId): void
     {
-        $teacher = Teacher::find($teacherId);
+        $teacher = Teacher::findByUserId($teacherId);
         if (!$teacher) {
-            header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404', ['error' => 'Enseignant non trouvé.']);
+            $this->redirect('error/404', ['message' => 'Enseignant non trouvé.']);
             return;
         }
 
         $this->view('admin/teachers/add-domains', [
             'teacher' => $teacher,
-            'domains' => Teacher::getDomainsWithoutMine($teacher['user_id'])
+            'domains' => Teacher::getDomainsWithoutMine($teacherId)
         ]);
     }
 
     /**
      * Traite le formulaire de rajout de domaine à un enseignant.
      * 
-     * @param int $teacherId
+     * @param int $teacherUserId
      * 
      * @return void
      */
-    public function addDomain(int $teacherId): void
+    public function addDomain(int $teacherUserId): void
     {
-        $teacher = Teacher::find($teacherId);
+        $teacher = Teacher::findByUserId($teacherUserId);
         if (!$teacher) {
-            header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404', ['error' => 'Enseignant non trouvé.']);
+            $this->redirect('error/404', ['message' => 'Enseignant non trouvé.']);
             return;
         }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('HTTP/1.1 400 Bad Request');
-            $this->view('errors/400', ['title' => 'Méthode non supportée', 'active' => '']);
+            $this->redirect('error/400', ['message' => 'Méthode non supportée']);
             return;
         }
 
@@ -128,69 +131,69 @@ class TeacherController extends Controller {
         if (!empty($errors)) {
             $this->view('admin/teachers/add-domains', [
                 'teacher' => $teacher,
-                'domains' => Teacher::getDomainsWithoutMine($teacher['user_id']),
-                'errors' => $errors
+                'domains' => Teacher::getDomainsWithoutMine($teacherUserId),
+                'errors' => $errors,
+                'data' => $_POST
             ]);
             return;
         }
 
-        if (Teacher::addDomain($teacher['user_id'], $domainId)) {
-            $this->redirect("admin/teachers/{$teacher['user_id']}/domains", [
+        if (Teacher::addDomain($teacherUserId, $domainId)) {
+            $this->redirect("admin/teachers/{$teacherUserId}/domains", [
                 'success' => 'Le nouveau domaine a été rajouté avec succès.'
             ]);
         } else {
-            $this->redirect("admin/teachers/{$teacher['user_id']}/domains", [
+            $this->redirect("admin/teachers/{$teacherUserId}/domains", [
                 'error' => 'Impossible de rajouter le domaine.'
             ]);
         }
     }
 
-   /**
+    /**
      * Traite la suppression d'un domaine associé à un enseignant.
      * 
-     * @param int $teacherId
+     * @param int $teacherUserId
+     * @param int $id (domain_id)
      * 
      * @return void
      */
-    public function removeDomain(int $teacherId): void
+    public function removeDomain(int $teacherUserId, int $id): void
     {
-        $teacher = Teacher::find($teacherId);
+        $teacher = Teacher::findByUserId($teacherUserId);
         if (!$teacher) {
-            header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404', ['error' => 'Enseignant non trouvé.']);
+            $this->redirect('error/404', ['message' => 'Enseignant non trouvé.']);
             return;
         }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('HTTP/1.1 400 Bad Request');
-            $this->view('errors/400', ['title' => 'Méthode non supportée', 'active' => '']);
+            $this->redirect('error/400', ['message' => 'Méthode non supportée']);
             return;
         }
 
-        $errors = [];
-        $domainId = htmlspecialchars($_POST['domain_id'] ?? '');
-
-        if (empty($domainId)) {
-            $errors['domain_id'] = 'Le domaine est requis.';
-        } elseif (!Domain::find($domainId)) {
-            $errors['domain_id'] = 'Le domaine n\'existe pas.';
-        }
-
-        if (!empty($errors)) {
-            $this->view('admin/teachers/show-domains', [
-                'teacher' => $teacher,
-                'domains' => Teacher::getDomainsByTeacher($teacher['user_id']),
-                'errors' => $errors
+        // Vérifier s'il y a des étudiants assignés dans ce domaine
+        $studentCount = Teacher::countStudentsByDomain($teacherUserId, $id);
+        if ($studentCount > 0) {
+            $this->redirect("admin/teachers/{$teacherUserId}/domains", [
+                'error' => "Impossible de supprimer ce domaine : l'enseignant encadre $studentCount étudiant(s) dans ce domaine."
             ]);
             return;
         }
 
-        if (Teacher::removeDomain($teacher['user_id'], $domainId)) {
-            $this->redirect("admin/teachers/{$teacher['user_id']}/domains", [
+        // Vérifier si c'est le dernier domaine
+        $domains = Teacher::getDomainsByTeacher($teacherUserId);
+        if (count($domains) <= 1) {
+            $this->redirect("admin/teachers/{$teacherUserId}/domains", [
+                'error' => "Impossible de supprimer le dernier domaine de l'enseignant : un domaine minimum est requis."
+            ]);
+            return;
+        }
+
+        if (Teacher::removeDomain($teacherUserId, $id)) {
+            $this->redirect("admin/teachers/{$teacherUserId}/domains", [
                 'success' => 'Le domaine a été supprimé avec succès.'
             ]);
         } else {
-            $this->redirect("admin/teachers/{$teacher['user_id']}/domains", [
+            $this->redirect("admin/teachers/{$teacherUserId}/domains", [
                 'error' => 'Impossible de supprimer le domaine.'
             ]);
         }
@@ -206,19 +209,13 @@ class TeacherController extends Controller {
     public function edit(int $id): void
     {
         $teacher = Teacher::find($id);
-        // dump($teacher);
         if (!$teacher) {
-            header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404', [
-                'title' => 'Page non trouvée',
-                'active' => ''
-            ]);
+            $this->redirect('error/404', ['message' => 'Enseignant non trouvé.']);
             return;
         }
 
         $this->view('admin/teachers/edit', [
             'teacher' => $teacher,
-            'active' => 'teachers',
             'domains' => Domain::all()
         ]);
     }
@@ -232,11 +229,7 @@ class TeacherController extends Controller {
     {
         $teacher = Teacher::find(intval(htmlspecialchars($_POST['id'])));
         if (!$teacher) {
-            header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404', [
-                'title' => 'Page non trouvée',
-                'active' => ''
-            ]);
+            $this->redirect('error/404', ['message' => 'Enseignant non trouvé.']);
             return;
         }
 
@@ -260,8 +253,6 @@ class TeacherController extends Controller {
                 'data' => $_POST,
                 'teacher' => $teacher,
                 'domains' => Domain::all(),
-                'title' => 'Modifier un enseignant',
-                'active' => 'teachers'
             ]);
             return;
         }
@@ -270,7 +261,7 @@ class TeacherController extends Controller {
             'firstname' => htmlspecialchars($_POST['firstname']),
             'lastname' => htmlspecialchars($_POST['lastname']),
             'gender' => htmlspecialchars($_POST['gender']),
-            'email'  => htmlspecialchars($_POST['email']),
+            'email' => htmlspecialchars($_POST['email']),
             'domain_id' => htmlspecialchars($_POST['domain_id'])
         ];
 

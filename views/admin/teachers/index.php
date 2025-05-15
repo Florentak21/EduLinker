@@ -6,6 +6,7 @@ $content = ob_start();
 
 <div class="card">
     <div class="card-header">
+        <h2>Liste des enseignants</h2>
         <div class="card-actions">
             <div class="search-box">
                 <i class="fas fa-search"></i>
@@ -17,12 +18,26 @@ $content = ob_start();
         </div>
     </div>
 
+    <!-- Affichage des messages depuis la redirection -->
+    <?php if (isset($_SESSION['error'])): ?>
+        <div class="alert error">
+            <i class="fas fa-exclamation-circle"></i>
+            <?= htmlspecialchars($_SESSION['error']) ?>
+        </div>
+    <?php endif; ?>
+    <?php if (isset($_SESSION['success'])): ?>
+        <div class="alert success">
+            <i class="fas fa-check-circle"></i>
+            <?= htmlspecialchars($_SESSION['success']) ?>
+        </div>
+    <?php endif; ?>
+
     <div class="table-responsive">
         <table class="table">
             <thead>
                 <tr>
                     <th>Enseignant</th>
-                    <th>Domaine</th>
+                    <th>Domaines</th>
                     <th>Étudiants</th>
                     <th>Actions</th>
                 </tr>
@@ -41,12 +56,24 @@ $content = ob_start();
                             </div>
                         </div>
                     </td>
-                    <td><?= htmlspecialchars($teacher['label']) ?></td>
+                    <td>
+                        <?php
+                        $domains = Teacher::getDomainsByTeacher($teacher['user_id']);
+                        if (!empty($domains)) {
+                            $domainLabels = array_map(function ($domain) {
+                                return htmlspecialchars($domain['label']);
+                            }, $domains);
+                            echo implode(', ', $domainLabels);
+                        } else {
+                            echo '<span class="text-muted">Aucun domaine</span>';
+                        }
+                        ?>
+                    </td>
                     <td><?= Teacher::countAssignedStudents($teacher['id']) ?? 0 ?></td>
                     <td>
                         <div class="action-buttons">
-                            <a href="/admin/teachers/<?= $teacher['id'] ?>/domains" class="btn btn-sm btn-outline" title="Domaines">
-                                <i class="fas fa-edit"></i>
+                            <a href="/admin/teachers/<?= $teacher['user_id'] ?>/domains" class="btn btn-sm btn-outline" title="Gérer les domaines">
+                                <i class="fas fa-book"></i>
                             </a>
                             <a href="/admin/teachers/edit/<?= $teacher['id'] ?>" class="btn btn-sm btn-outline" title="Modifier">
                                 <i class="fas fa-edit"></i>
@@ -75,6 +102,7 @@ $content = ob_start();
 </div>
 
 <?php
+unset($_SESSION['error'], $_SESSION['success']);
 $content = ob_get_clean();
 require_once dirname(__DIR__, 2) . '/layouts/admin.php';
 ?>

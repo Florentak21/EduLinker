@@ -7,6 +7,7 @@ use App\Controllers\TeacherController;
 use App\Controllers\DomainController;
 use App\Controllers\AdminController;
 use App\Controllers\HomeController;
+use App\Controllers\ErrorController;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\RoleMiddleware;
 use App\Core\Application;
@@ -14,10 +15,18 @@ use App\Core\Application;
 $app = new Application();
 
 /**
+ * Routes pour gérer les erreurs
+ */
+$app->router->get('error/400', ErrorController::class, 'error400');
+$app->router->get('error/403', ErrorController::class, 'error403');
+$app->router->get('error/404', ErrorController::class, 'error404');
+$app->router->get('error/500', ErrorController::class, 'error500');
+
+/**
  * Route accessibles à tous (suivant qu'on est connecté ou non).
  */
 
- /* Route pour la page d'acceuil */
+/* Route pour la page d'accueil */
 $app->router->get('/', HomeController::class, 'index');
 
 /* Routes pour l'authentification */
@@ -39,7 +48,7 @@ $app->router->post('profile/update/password', AuthController::class, 'updatePass
  * Accessibles uniquement aux admins.
  */
 
- /* Route pour le dashboard de l'admin */
+/* Route pour le dashboard de l'admin */
 $app->router->get('admin/dashboard', AdminController::class, 'index', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
 
 /* Routes permettant à l'admin de gérer les users */
@@ -70,10 +79,10 @@ $app->router->post('admin/teachers/store', TeacherController::class, 'store', [n
 $app->router->get('admin/teachers/destroy/{id}', TeacherController::class, 'destroy', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
 
 /* Routes permettant à l'admin de rajouter/supprimer des domaines aux teachers */
-$app->router->get('admin/teachers/{id}/domains', TeacherController::class, 'showMyDomains', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
-$app->router->get('admin/teachers/{id}/domains/add', TeacherController::class, 'showOtherDomains', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
-$app->router->get('admin/teachers/{id}/domains/store', TeacherController::class, 'addDomain', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
-$app->router->post('admin/teachers/{id}/domains/remove/{id}', TeacherController::class, 'removeDomain', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
+$app->router->get('admin/teachers/{teacherUserId}/domains', TeacherController::class, 'showMyDomains', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
+$app->router->get('admin/teachers/{teacherUserId}/domains/add', TeacherController::class, 'showOtherDomains', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
+$app->router->post('admin/teachers/{teacherUserId}/domains/store', TeacherController::class, 'addDomain', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
+$app->router->post('admin/teachers/{teacherUserId}/domains/remove/{id}', TeacherController::class, 'removeDomain', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
 
 /* Routes permettant à l'admin de gérer les domaines */
 $app->router->get('admin/domains', DomainController::class, 'index', [new AuthMiddleware(), new RoleMiddleware(['admin'])]);
@@ -88,7 +97,6 @@ $app->router->get('admin/domains/destroy/{id}', DomainController::class, 'destro
  * Accessibles uniquement aux teachers.
  * Permet aux teachers de consulter leur dashboard.
  */
-
 $app->router->post('teacher/dashboard/', TeacherController::class, 'dashboard', [new AuthMiddleware(), new RoleMiddleware(['teacher'])]);
 
 /**

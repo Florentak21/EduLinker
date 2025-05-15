@@ -12,7 +12,7 @@ class HomeController extends Controller
     }
 
     /**
-     * Page d'accueil publique
+     * Page d'accueil.
      */
     public function index(): void
     {

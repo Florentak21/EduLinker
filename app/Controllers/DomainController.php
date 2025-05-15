@@ -78,13 +78,12 @@ class DomainController extends Controller {
     {
         $domain = Domain::find($id);
         if (!$domain) {
-            header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404', []);
+            $this->redirect('error/404', ['message' => 'Domaine non trouvé.']);
             return;
         }
         $this->view('admin/domains/edit', [
             'domain' => $domain,
-            'title' => 'Mêttre à jour un domaine'
+            'title' => 'Mettre à jour un domaine'
         ]);
         unset($_SESSION['error']);
     }
@@ -100,15 +99,13 @@ class DomainController extends Controller {
     {
         $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
         if ($id <= 0) {
-            header('HTTP/1.1 400 Bad Request');
-            $this->view('errors/400', ['error' => 'ID invalide']);
+            $this->redirect('error/400', ['message' => 'ID invalide']);
             return;
         }
 
         $domain = Domain::find($id);
         if (!$domain) {
-            header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404', []);
+            $this->redirect('error/404', ['message' => 'Domaine non trouvé.']);
             return;
         }
 
@@ -140,7 +137,7 @@ class DomainController extends Controller {
     /**
      * Supprime un domaine de la base de données.
      *
-     * @param int $id L’identifiant unique du domaine.
+     * @param int $id
      * @return void
      */
     public function destroy(int $id): void

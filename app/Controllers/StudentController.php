@@ -50,8 +50,7 @@ class StudentController extends Controller {
     {
         $student = Student::findByUserId($_SESSION['user_id']);
         if (!$student) {
-            header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404', ['error' => 'Étudiant non trouvé.']);
+            $this->redirect('error/404', ['message' => 'Étudiant non trouvé.']);
             return;
         }
 
@@ -69,14 +68,13 @@ class StudentController extends Controller {
     public function submitCdc(): void
     {
         if (!isset($_SESSION['user_id'])) {
-            $this->redirect('/login');
+            $this->redirect('error/403', ['message' => 'Vous devez être connecté pour accéder à cette page.']);
             return;
         }
 
         $student = Student::findByUserId($_SESSION['user_id']);
         if (!$student) {
-            header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404', ['error' => 'Étudiant non trouvé.']);
+            $this->redirect('error/404', ['message' => 'Étudiant non trouvé.']);
             return;
         }
 
@@ -132,11 +130,10 @@ class StudentController extends Controller {
                     'submitted_at' => (new DateTime())->format('Y-m-d H:i:s')
                 ];
 
-
                 try {
                     if (Student::update($student['id'], $data)) {
-
-                        // S'il a un binome on met à jour les infos du binome aussi
+                        
+                        // S'il a un binôme, on met à jour les infos du binôme aussi
                         if ($hasBinome) {
                             $binome = Student::findByMatricule(htmlspecialchars(($_POST['matricule_binome'])));
                             $data = [
@@ -154,12 +151,12 @@ class StudentController extends Controller {
                         $this->redirect('student/submit-cdc', ['success' => 'CDC soumis avec succès.']);
                     } else {
                         $errorInfo = Student::getPdo()->errorInfo();
-                        error_log("Erreur lors de la mise à jour de l'étudiant : " . json_encode($errorInfo));
+                        error_log("Erreur lors de la mise à jour de l'étudiant à " . date('Y-m-d H:i:s') . ": " . json_encode($errorInfo));
                         $this->redirect('student/dashboard', ['error' => 'Erreur lors de la soumission.']);
                     }
                 } catch (Exception $e) {
-                    error_log("Exception lors de la mise à jour de l'étudiant : " . $e->getMessage());
-                    $this->redirect('student/dashboard', ['error' => 'Erreur lors de la soumission.']);
+                    error_log("Exception lors de la mise à jour de l'étudiant à " . date('Y-m-d H:i:s') . ": " . $e->getMessage());
+                    $this->redirect('student/dashboard', ['error' => 'Erreur lors de la soumission : ' . $e->getMessage()]);
                 }
             } else {
                 $this->redirect('student/dashboard', ['error' => 'Erreur lors de l’upload du fichier.']);
@@ -179,41 +176,40 @@ class StudentController extends Controller {
     {
         $student = Student::findByUserId($_SESSION['user_id']);
         if (!$student) {
-            header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404', ['error' => 'Étudiant non trouvé.']);
+            $this->redirect('error/404', ['message' => 'Étudiant non trouvé.']);
             return;
         }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->redirect('student/dashboard');
+            $this->redirect('error/400', ['message' => 'Méthode non supportée']);
             return;
         }
 
         if ($student['theme_status'] !== 'en-traitement' || !$student['submitted_at']) {
-            $this->redirect('student/dashboard');
+            $this->redirect('student/dashboard', ['error' => 'Aucune soumission en cours à relancer.']);
             return;
         }
 
         // Vérifier si 7 jours se sont écoulés depuis la soumission
         if (!$this->canRemind($student['submitted_at'])) {
-            $this->redirect('student/dashboard');
+            $this->redirect('student/dashboard', ['error' => 'Vous devez attendre 7 jours après la soumission pour relancer.']);
             return;
         }
 
-        // Mettre à jour last_reminder_at
         $now = new DateTime();
         $updateData = ['last_reminder_at' => $now->format('Y-m-d H:i:s')];
         if (Student::update($student['id'], $updateData)) {
-            $this->redirect('student/dashboard');
+            $this->redirect('student/dashboard', ['success' => 'Relance effectuée avec succès.']);
         } else {
-            $this->redirect('student/dashboard');
+            $this->redirect('student/dashboard', ['error' => 'Erreur lors de la relance.']);
         }
     }
 
     /**
      * Vérifie si l'étudiant peut relancer (7 jours après la soumission).
      * 
-     * @param string $submittedAt Date de soumission
+     * @param string $submittedAt
+     * 
      * @return bool
      */
     private function canRemind(string $submittedAt): bool
@@ -235,11 +231,7 @@ class StudentController extends Controller {
     {
         $student = Student::find($id);
         if (!$student) {
-            header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404', [
-                'title' => 'Page non trouvée',
-                'active' => ''
-            ]);
+            $this->redirect('error/404', ['message' => 'Étudiant non trouvé.']);
             return;
         }
 
@@ -248,7 +240,7 @@ class StudentController extends Controller {
             'active' => 'students',
             'domains' => Domain::all(),
             'teachers' => Teacher::findByDomains($student['domain_id']),
-            'title' => 'Mêttre à jour un étudiant'
+            'title' => 'Mettre à jour un étudiant'
         ]);
     }
 
@@ -261,11 +253,7 @@ class StudentController extends Controller {
     {
         $student = Student::find(intval(htmlspecialchars($_POST['id'])));
         if (!$student) {
-            header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404', [
-                'title' => 'Page non trouvée',
-                'active' => ''
-            ]);
+            $this->redirect('error/404', ['message' => 'Étudiant non trouvé.']);
             return;
         }
 
@@ -298,7 +286,7 @@ class StudentController extends Controller {
                 'student' => $student,
                 'domains' => Domain::all(),
                 'teachers' => Teacher::findByDomains($student['domain_id']),
-                'title' => 'Mêttre à jour un étudiant',
+                'title' => 'Mettre à jour un étudiant',
                 'active' => 'students'
             ]);
             return;
@@ -330,13 +318,12 @@ class StudentController extends Controller {
     {
         $student = Student::find($id);
         if (!$student) {
-            $students = Student::all();
-            $this->view('admin/students/index', ['students' => $students, 'error' => 'Étudiant non trouvé.']);
+            $this->redirect('admin/students', ['error' => 'Étudiant non trouvé.']);
             return;
         }
 
         if ($student['cdc'] !== null) {
-            $filePath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR .  $student['cdc'];
+            $filePath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . $student['cdc'];
     
             $fileError = null;
             if (file_exists($filePath)) {
@@ -349,19 +336,17 @@ class StudentController extends Controller {
         }
 
         if (Student::delete($id)) {
-            $students = Student::all();
             $successMessage = 'La suppression de l\'étudiant a été effectuée avec succès';
             if ($fileError) {
-                $successMessage .= ' (mais son cdc n\' a pas pu etre supprimé) : ' . $fileError . ').';
+                $successMessage .= ' (mais son cdc n\'a pas pu être supprimé) : ' . $fileError . ').';
             }
-            $this->view('admin/students/index', ['students' => $students, 'success' => $successMessage]);
+            $this->redirect('admin/students', ['success' => $successMessage]);
         } else {
-            $students = Student::all();
             $errorMessage = 'Erreur lors de la suppression de l\'étudiant.';
             if ($fileError) {
                 $errorMessage .= ' Une erreur est aussi survenue lors de la suppression du fichier : ' . $fileError . '.';
             }
-            $this->view('admin/students/index', ['students' => $students, 'error' => $errorMessage]);
+            $this->redirect('admin/students', ['error' => $errorMessage]);
         }
     }
 }

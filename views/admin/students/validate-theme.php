@@ -61,6 +61,7 @@
 </div>
 
 <?php
+unset($_SESSION['error'], $_SESSION['success']);
 $content = ob_get_clean();
 require_once dirname(__DIR__, 2) . '/layouts/admin.php';
 ?>

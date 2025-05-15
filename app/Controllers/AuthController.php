@@ -134,7 +134,7 @@ class AuthController extends Controller {
         }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->redirect('login', ['error' => 'Méthode non autorisée.']);
+            $this->redirect('error/400', ['message' => 'Méthode non supportée']);
             return;
         }
 
@@ -202,14 +202,14 @@ class AuthController extends Controller {
     public function show(): void
     {
         if (!isset($_SESSION['user_id'])) {
-            $this->redirect('login', ['error' => 'Vous devez être connecté pour accéder à cette page.']);
+            $this->redirect('error/403', ['message' => 'Vous devez être connecté pour accéder à cette page.']);
             return;
         }
 
         $user = User::find($_SESSION['user_id']);
         if (!$user) {
             session_destroy();
-            $this->redirect('login', ['error' => 'Utilisateur non trouvé.']);
+            $this->redirect('error/404', ['message' => 'Utilisateur non trouvé.']);
             return;
         }
 
@@ -234,7 +234,7 @@ class AuthController extends Controller {
     public function profile(): void
     {
         if (!isset($_SESSION['user_id'])) {
-            $this->redirect('login', ['error' => 'Vous devez être connecté pour accéder à cette page.']);
+            $this->redirect('error/403', ['message' => 'Vous devez être connecté pour accéder à cette page.']);
             return;
         }
 
@@ -254,12 +254,12 @@ class AuthController extends Controller {
     public function updateProfile(): void
     {
         if (!isset($_SESSION['user_id'])) {
-            $this->redirect('login', ['error' => 'Vous devez être connecté pour accéder à cette page.']);
+            $this->redirect('error/403', ['message' => 'Vous devez être connecté pour accéder à cette page.']);
             return;
         }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->redirect('profile-show', ['error' => 'Méthode non supportée.']);
+            $this->redirect('error/400', ['message' => 'Méthode non supportée.']);
             return;
         }
 
@@ -320,7 +320,7 @@ class AuthController extends Controller {
     public function changePassword(): void
     {
         if (!isset($_SESSION['user_id'])) {
-            $this->redirect('login', ['error' => 'Vous devez être connecté pour accéder à cette page.']);
+            $this->redirect('error/403', ['message' => 'Vous devez être connecté pour accéder à cette page.']);
             return;
         }
 
@@ -337,12 +337,12 @@ class AuthController extends Controller {
     public function updatePassword(): void
     {
         if (!isset($_SESSION['user_id'])) {
-            $this->redirect('login', ['error' => 'Vous devez être connecté pour accéder à cette page.']);
+            $this->redirect('error/403', ['message' => 'Vous devez être connecté pour accéder à cette page.']);
             return;
         }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->redirect('profile-password', ['error' => 'Méthode non supportée.']);
+            $this->redirect('error/400', ['message' => 'Méthode non supportée.']);
             return;
         }
 
@@ -398,7 +398,7 @@ class AuthController extends Controller {
     }
 
     /**
-     * Génére le matricule d'un student.
+     * Génère le matricule d'un student.
      * 
      * @return string
      */

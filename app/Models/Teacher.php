@@ -14,16 +14,15 @@ class Teacher extends Model {
     public static function all(): array
     {
         $stmt = parent::getPdo()->query("
-            SELECT teachers.*, users.firstname, users.lastname, users.gender, users.email, domains.code, domains.label
+            SELECT DISTINCT teachers.*, users.firstname, users.lastname, users.gender, users.email
             FROM teachers 
             JOIN users ON teachers.user_id = users.id
-            JOIN domains ON teachers.domain_id = domains.id
         ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
-     * Recherche un teacher grâce à son id.
+     * Recherche un teacher grâce à son teacher_id.
      * 
      * @param int $id
      * 
@@ -32,12 +31,31 @@ class Teacher extends Model {
     public static function find(int $id): ?array
     {
         $stmt = parent::getPdo()->prepare("
-            SELECT teachers.*, users.firstname, users.lastname, users.gender, users.email 
+            SELECT teachers.*, users.firstname, users.lastname, users.gender, users.email
             FROM teachers 
-            JOIN users ON teachers.user_id = users.id 
+            JOIN users ON teachers.user_id = users.id
             WHERE teachers.id = ?
         ");
         $stmt->execute([intval($id)]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+    
+    /**
+     * Recherche un teacher grâce à son user_id.
+     * 
+     * @param int $id
+     * 
+     * @return array|null
+     */
+    public static function findByUserId(int $userId): ?array
+    {
+        $stmt = parent::getPdo()->prepare("
+            SELECT teachers.*, users.firstname, users.lastname, users.gender, users.email
+            FROM teachers 
+            JOIN users ON teachers.user_id = users.id
+            WHERE teachers.user_id = ?
+        ");
+        $stmt->execute([intval($userId)]);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
     
@@ -51,10 +69,10 @@ class Teacher extends Model {
     public static function findByDomains(int $id): ?array
     {
         $stmt = parent::getPdo()->prepare("
-            SELECT teachers.*, users.firstname, users.lastname, users.email, domains.code, domains.label
+            SELECT teachers.*, users.firstname, users.lastname, users.email, domains.*
             FROM teachers 
-            JOIN domains ON teachers.domain_id = domains.id
             JOIN users ON teachers.user_id = users.id
+            JOIN domains ON teachers.domain_id = domains.id
             WHERE domains.id = ?
         ");
         $stmt->execute([intval($id)]);
@@ -66,7 +84,7 @@ class Teacher extends Model {
      */
     public static function count(): int
     {
-        $stmt = parent::getPdo()->prepare("SELECT COUNT(*) FROM teachers");
+        $stmt = parent::getPdo()->prepare("SELECT COUNT(DISTINCT user_id) FROM teachers");
         $stmt->execute();
         $result = $stmt->fetchColumn();
         return (int) $result;
@@ -91,6 +109,25 @@ class Teacher extends Model {
         return (int) $result;
     }
 
+    /**
+     * Compte le nombre d'étudiants assignés à un enseignant pour un domaine spécifique.
+     * 
+     * @param int $teacherUserId L'ID de l'utilisateur de l'enseignant
+     * @param int $domainId L'ID du domaine
+     * @return int
+     */
+    public static function countStudentsByDomain(int $teacherUserId, int $domainId): int
+    {
+        $stmt = parent::getPdo()->prepare("
+            SELECT COUNT(*) 
+            FROM students 
+            JOIN teachers ON students.teacher_id = teachers.id
+            WHERE teachers.user_id = ? AND students.domain_id = ?
+        ");
+        $stmt->execute([intval($teacherUserId), intval($domainId)]);
+        $result = $stmt->fetchColumn();
+        return (int) $result;
+    }
 
     /**
      * Récupère les étudiants qu'un professeur doit encadrer.
@@ -120,7 +157,7 @@ class Teacher extends Model {
     public static function getDomainsByTeacher(int $userId): array
     {
         $stmt = parent::getPdo()->prepare("
-            SELECT domains.code, domains.label
+            SELECT domains.id, domains.code, domains.label
             FROM teachers 
             JOIN domains ON teachers.domain_id = domains.id 
             WHERE teachers.user_id = ?
@@ -151,12 +188,12 @@ class Teacher extends Model {
     }
 
     /**
-     * Rajoutte un domain à un teacher.
+     * Rajoute un domaine à un teacher.
      * 
-     * @param int $id
-     * @param int $domain_id
+     * @param int $userId
+     * @param int $domainId
      * 
-     * @return [type]
+     * @return bool
      */
     public static function addDomain(int $userId, int $domainId): bool
     {
@@ -200,7 +237,7 @@ class Teacher extends Model {
     }
 
     /**
-     * Créé un nouveau teacher.
+     * Crée un nouveau teacher.
      * 
      * @param array $data
      * 
