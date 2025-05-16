@@ -12,14 +12,22 @@ class Teacher extends Model {
      * @return array
      */
     public static function all(): array
-    {
-        $stmt = parent::getPdo()->query("
-            SELECT DISTINCT teachers.*, users.firstname, users.lastname, users.gender, users.email
-            FROM teachers 
-            JOIN users ON teachers.user_id = users.id
-        ");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+{
+    $stmt = parent::getPdo()->query("
+        SELECT
+            MIN(teachers.id) AS id,
+            teachers.user_id,
+            users.firstname, 
+            users.lastname, 
+            users.gender, 
+            users.email
+        FROM teachers 
+        JOIN users ON teachers.user_id = users.id
+        GROUP BY teachers.user_id, users.firstname, users.lastname, users.gender, users.email
+    ");
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 
     /**
      * Recherche un teacher grâce à son teacher_id.

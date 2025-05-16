@@ -2,6 +2,7 @@
 use App\Models\Teacher;
 
 $content = ob_start();
+dump($teachers)
 ?>
 
 <div class="card">
@@ -63,7 +64,7 @@ $content = ob_start();
                             $domainLabels = array_map(function ($domain) {
                                 return htmlspecialchars($domain['label']);
                             }, $domains);
-                            echo implode(', ', $domainLabels);
+                            echo "<strong>" . implode(', ', $domainLabels) . "</strong>";
                         } else {
                             echo '<span class="text-muted">Aucun domaine</span>';
                         }

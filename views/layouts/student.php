@@ -33,7 +33,7 @@
                 <a href="/student/submit-cdc" class="<?= $active === 'cdc' ? 'active' : '' ?>">
                     <i class="fas fa-file-upload"></i> Soumettre mon CDC
                 </a>
-                <a href="/logout" class="logout">
+                <a href="/logout" class="logout" onclick="return confirm('Voulez-vous vraiment vous déconnecter ?');">
                     <i class="fas fa-sign-out-alt"></i> Déconnexion
                 </a>
             </nav>

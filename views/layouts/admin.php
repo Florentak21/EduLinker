@@ -34,7 +34,7 @@
                 <a href="/profile-show" class="<?= $active === 'profile' ? 'active' : '' ?>">
                     <i class="fas fa-user-circle"></i> Profil
                 </a>
-                <a href="/logout" class="logout">
+                <a href="/logout" class="logout" onclick="return confirm('Voulez-vous vraiment vous déconnecter ?');">
                     <i class="fas fa-sign-out-alt"></i> Déconnexion
                 </a>
             </nav>

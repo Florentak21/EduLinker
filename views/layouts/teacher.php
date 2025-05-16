@@ -25,7 +25,7 @@
                 <a href="/teacher/students" class="<?= $active === 'students' ? 'active' : '' ?>">
                     <i class="fas fa-user-graduate"></i> Mes étudiants
                 </a>
-                <a href="/logout" class="logout">
+                <a href="/logout" class="logout" onclick="return confirm('Voulez-vous vraiment vous déconnecter ?');">
                     <i class="fas fa-sign-out-alt"></i> Déconnexion
                 </a>
             </nav>
