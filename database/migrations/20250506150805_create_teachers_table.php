@@ -20,11 +20,9 @@ final class CreateTeachersTable extends AbstractMigration
     public function change(): void
     {
         $this->table('teachers')
-            ->addColumn('phone',     'string', ['limit' => 50, 'null' => false])
             ->addColumn('user_id',   'integer' ,['signed' => false , 'null' => false])
             ->addColumn('domain_id', 'integer', ['signed' => false , 'null' => false])
             ->addTimestamps()
-            ->addIndex(['phone'], ['unique' => true])
             ->addForeignKey('user_id',   'users',   'id', ['delete' => 'CASCADE', 'update' => 'NO_ACTION'])
             ->addForeignKey('domain_id', 'domains', 'id', ['delete' => 'CASCADE', 'update' => 'NO_ACTION'])
             ->create();

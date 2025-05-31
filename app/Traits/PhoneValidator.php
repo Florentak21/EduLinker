@@ -2,6 +2,7 @@
 namespace App\Traits;
 
 use App\Models\Student;
+use App\Models\User;
 
 trait PhoneValidator {
     /**
@@ -23,7 +24,7 @@ trait PhoneValidator {
             return "Le numéro de téléphone doit contenir entre 8 et 15 chiffres.";
         }
 
-        $result = Student::findByPhone($phone, $excludeId);
+        $result = User::findByPhone($phone, $excludeId);
         if ($result) {
             return "Ce numéro est déjà utilisé par un autre utilisateur.";
         }

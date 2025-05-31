@@ -19,7 +19,7 @@ trait PasswordValidator {
         }
 
         if (!preg_match('/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/', $password)) {
-            return "Le mot de passe doit contenir au moins 8 caractères, une lettre majuscule, une lettre minuscule, un chiffre et un caractère spécial.";
+            return "Le mot de passe ne respecte pas les standards définis.";
         }
 
         return null;

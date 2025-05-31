@@ -1,20 +1,58 @@
-<?php $content = ob_start(); ?>
-<h1>Connexion</h1>
-<form method="POST" action="/authenticate">
-    <div class="mb-3">
-        <label for="email" class="form-label">Email</label>
-        <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($data['email'] ?? ''); ?>">
-        <?php if (isset($errors['email'])): ?>
-            <small class="error"><?php echo htmlspecialchars($errors['email']); ?></small>
-        <?php endif; ?>
+<?php ob_start(); ?>
+
+<div class="auth-card">
+    <div class="auth-header">
+        <h2>Connexion à votre compte</h2>
+        <p>Entrez vos identifiants pour accéder à la plateforme</p>
     </div>
-    <div class="mb-3">
-        <label for="password" class="form-label">Mot de passe</label>
-        <input type="password" class="form-control" id="password" name="password">
-        <?php if (isset($errors['password'])): ?>
-            <small class="error"><?php echo htmlspecialchars($errors['password']); ?></small>
-        <?php endif; ?>
+    
+    <!-- Affichage des messages depuis la redirection -->
+    <?php if (isset($_SESSION['error'])): ?>
+        <div class="alert error">
+            <i class="fas fa-exclamation-circle"></i>
+            <?= htmlspecialchars($_SESSION['error']) ?>
+        </div>
+    <?php endif; ?>
+    
+    <!-- Affichage des erreurs de formulaire -->
+    <?php if (isset($errors['general'])): ?>
+        <div class="alert error">
+            <i class="fas fa-exclamation-circle"></i>
+            <?= htmlspecialchars($errors['general']) ?>
+        </div>
+    <?php endif; ?>
+    
+    <form action="/authenticate" method="POST" class="auth-form">
+        <div class="form-group">
+            <label for="email">Adresse email</label>
+            <input type="email" id="email" name="email" class="form-control <?= isset($errors['email']) ? 'is-invalid' : '' ?>" 
+                   value="<?= htmlspecialchars($data['email'] ?? '') ?>" required>
+            <?php if (isset($errors['email'])): ?>
+                <div class="invalid-feedback"><?= htmlspecialchars($errors['email']) ?></div>
+            <?php endif; ?>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Mot de passe</label>
+            <input type="password" id="password" name="password" class="form-control <?= isset($errors['password']) ? 'is-invalid' : '' ?>" required>
+            <?php if (isset($errors['password'])): ?>
+                <div class="invalid-feedback"><?= htmlspecialchars($errors['password']) ?></div>
+            <?php endif; ?>
+        </div>
+        
+        <button type="submit" class="btn btn-primary btn-block">
+            <i class="fas fa-sign-in-alt"></i> Se connecter
+        </button>
+    </form>
+    
+    <div class="auth-footer">
+        <p>Vous n'avez pas de compte ? <a href="/register">créer un compte</a></p>
     </div>
-    <button type="submit" class="btn btn-primary">Se connecter</button>
-</form>
-<?php $content = ob_get_clean(); require_once dirname(__DIR__, 1) . '/layout.php'; ?>
+</div>
+
+<?php
+unset($_SESSION['error']);
+
+$content = ob_get_clean();
+require_once dirname(__DIR__, 1) . '/layouts/auth.php';
+?>

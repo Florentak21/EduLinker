@@ -27,7 +27,7 @@ trait BinomeMatriculeValidator {
             return "Le matricule du binôme est requis si un binôme est indiqué.";
         }
 
-        if (!preg_match('/^[A-Z]{3}-[0-9]{4}-[A-Za-z0-9]{4}$/', $matriculeBinome))
+        if (!preg_match('/^[A-Z]{2,}-[0-9]{4}-[A-Za-z0-9]{4}$/', $matriculeBinome))
         {
             return "Le matricule du binôme doit respecter le format DOM-YYYY-XXXX.";
         }

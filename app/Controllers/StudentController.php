@@ -3,23 +3,24 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Core\Router;
+use App\Models\Domain;
 use App\Traits\PasswordValidator;
 use App\Traits\ThemeValidator;
 use App\Traits\CdcValidator;
 use App\Traits\MatriculeValidator;
 use App\Traits\BinomeMatriculeValidator;
-use App\Traits\PhoneValidator;
 use App\Models\Student;
 use App\Models\Teacher;
-use App\Models\Domain;
 use App\Traits\EmailValidator;
 use App\Traits\FirstnameValidator;
 use App\Traits\GenderValidator;
 use App\Traits\LastnameValidator;
 use App\Traits\RoleValidator;
+use DateTime;
+use Exception;
 
 class StudentController extends Controller {
-    use LastnameValidator, FirstnameValidator, GenderValidator, RoleValidator, PasswordValidator, EmailValidator, PhoneValidator, ThemeValidator, CdcValidator, MatriculeValidator, BinomeMatriculeValidator;
+    use LastnameValidator, FirstnameValidator, GenderValidator, RoleValidator, PasswordValidator, EmailValidator, ThemeValidator, CdcValidator, MatriculeValidator, BinomeMatriculeValidator;
 
     public function __construct(Router $router)
     {
@@ -27,88 +28,201 @@ class StudentController extends Controller {
     }
 
     /**
-     * Affiche tous les students (pour l'admin).
+     * Affiche tous les students.
      * 
      * @return void
      */
     public function index(): void
     {
         $students = Student::all();
-        $this->view('students/index', ['students' => $students]);
+        $this->view('/admin/students/index', [
+            'students' => $students,
+            'title' => 'Gestion des étudiants'
+        ]);
     }
 
     /**
-     * Affiche le formulaire de création d'un student (pour l'admin).
+     * Affiche le tableau de bord de l'étudiant.
      * 
      * @return void
      */
-    public function create(): void
+    public function dashboard(): void
     {
-        $domains = Domain::all();
-        $this->view('students/create', ['domains' => $domains]);
-    }
-
-    /**
-     * Traite le formulaire de création d'un student (pour l'admin).
-     * 
-     * @return void
-     */
-    public function store(): void
-    {
-        $errors = [];
-
-        $lastnameError = $this->validateLastname($_POST['lastname'] ?? '');
-        if ($lastnameError) $errors['lastname'] = $lastnameError;
-
-        $firstnameError = $this->validateFirstname($_POST['firstname'] ?? '');
-        if ($firstnameError) $errors['firstname'] = $firstnameError;
-
-        $genderError = $this->validateGender($_POST['gender'] ?? '');
-        if ($genderError) $errors['gender'] = $genderError;
-
-        $emailError = $this->validateEmail($_POST['email'] ?? '');
-        if ($emailError) $errors['email'] = $emailError;
-
-        $phoneError = $this->validatePhone($_POST['phone'] ?? '');
-        if ($phoneError) $errors['phone'] = $phoneError;
-
-        $passwordError = $this->validatePassword($_POST['password'] ?? '');
-        if ($passwordError) $errors['password'] = $passwordError;
-
-        if (!isset($_POST['domain_id']) || empty($_POST['domain_id'])) {
-            $errors['domain_id'] = 'Le champ domaine est requis.';
-        }
-
-        /* Génération du matricule basé sur le domaine d'étude du student. */
-        $domain = Domain::find($_POST['domain_id']);
-        $matricule = $this->generateMatricule($domain['code']);
-
-        $data = [
-            'matricule' => $matricule,
-            'firstname' => $_POST['firstname'],
-            'lastname' => $_POST['lastname'],
-            'gender' => $_POST['gender'],
-            'email' => $_POST['email'],
-            'phone' => $_POST['phone'],
-            'password' => password_hash($_POST['password'], PASSWORD_DEFAULT),
-            'domain_id' => $_POST['domain_id']
-        ];
-
-        if (!empty($errors)) {
-            $domains = Domain::all();
-            $this->view('students/create', ['domains' => $domains, 'errors' => $errors, 'data' => $_POST]);
+        $student = Student::findByUserId($_SESSION['user_id']);
+        if (!$student) {
+            header('HTTP/1.1 404 Not Found');
+            $this->view('errors/404', ['error' => 'Étudiant non trouvé.']);
             return;
         }
 
-        if (Student::create($data)) {
-            $this->redirect('students');
+        $this->view('student/dashboard', [
+            'student' => $student,
+            'title' => 'Tableau de bord'
+        ]);
+    }
+
+    /**
+     * Traite la soumission d'un cahier de charge.
+     * 
+     * @return void
+     */
+    public function submitCdc(): void
+    {
+        if (!isset($_SESSION['user_id'])) {
+            $this->redirect('/login');
+            return;
+        }
+
+        $student = Student::findByUserId($_SESSION['user_id']);
+        if (!$student) {
+            header('HTTP/1.1 404 Not Found');
+            $this->view('errors/404', ['error' => 'Étudiant non trouvé.']);
+            return;
+        }
+
+        if (isset($student['theme_status']) && $student['theme_status'] !== 'non-soumis') {
+            $this->redirect('student/dashboard', ['error' => 'Une soumission a déjà été effectuée.']);
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $errors = [];
+
+            $errors['theme'] = $this->validateTheme($_POST['theme'] ?? '');
+            $errors['cdc_file'] = $this->validateCdc($_FILES['cdc_file'] ?? []);
+            $hasBinome = isset($_POST['has_binome']) && $_POST['has_binome'] === '1';
+            if (!isset($_POST['has_binome']) || !in_array($_POST['has_binome'], ['0', '1'])) {
+                $errors['has_binome'] = 'La valeur de "A un binôme ?" est invalide.';
+            }
+            $errors['matricule_binome'] = $this->validateBinomeMatricule($_POST['matricule_binome'] ?? '', $hasBinome);
+            if ($hasBinome && $_POST['matricule_binome'] === $student['matricule']) {
+                $errors['matricule_binome'] = 'Vous ne pouvez pas vous choisir comme binôme.';
+            }
+
+            $errors = array_filter($errors);
+
+            if (!empty($errors)) {
+                $this->view('student/submit-cdc', ['student' => $student, 'errors' => $errors, 'data' => $_POST]);
+                return;
+            }
+
+            $file = $_FILES['cdc_file'];
+            $domain = Domain::find($student['domain_id']);
+            if (!$domain) {
+                $this->view('student/submit-cdc', ['student' => $student, 'error' => 'Domaine non trouvé pour cet étudiant.']);
+                return;
+            }
+            $fileName = 'cahier_de_charge_' . $student['matricule'] . '.pdf';
+            $uploadDir = dirname(__DIR__, 2) . '/storage';
+            $uploadPath = $uploadDir . '/' . $fileName;
+
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+
+            if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
+                $data = [
+                    'theme' => htmlspecialchars($_POST['theme']),
+                    'theme_status' => 'en-traitement',
+                    'cdc' => $fileName,
+                    'has_binome' => $hasBinome ? 1 : 0,
+                    'matricule_binome' => $hasBinome ? htmlspecialchars(($_POST['matricule_binome'])) : null,
+                    'submitted_at' => (new DateTime())->format('Y-m-d H:i:s')
+                ];
+
+
+                try {
+                    if (Student::update($student['id'], $data)) {
+
+                        // S'il a un binome on met à jour les infos du binome aussi
+                        if ($hasBinome) {
+                            $binome = Student::findByMatricule(htmlspecialchars(($_POST['matricule_binome'])));
+                            $data = [
+                                'theme' => htmlspecialchars($_POST['theme']),
+                                'theme_status' => 'en-traitement',
+                                'cdc' => $fileName,
+                                'has_binome' => 1,
+                                'matricule_binome' => $student['matricule'],
+                                'submitted_at' => (new DateTime())->format('Y-m-d H:i:s')
+                            ];
+                            Student::update($binome['id'], $data);
+                        }
+
+                        $this->redirect('student/submit-cdc', ['success' => 'CDC soumis avec succès.']);
+                    } else {
+                        $errorInfo = Student::getPdo()->errorInfo();
+                        error_log("Erreur lors de la mise à jour de l'étudiant : " . json_encode($errorInfo));
+                        $this->redirect('student/dashboard', ['error' => 'Erreur lors de la soumission.']);
+                    }
+                } catch (Exception $e) {
+                    error_log("Exception lors de la mise à jour de l'étudiant : " . $e->getMessage());
+                    $this->redirect('student/dashboard', ['error' => 'Erreur lors de la soumission.']);
+                }
+            } else {
+                $this->redirect('student/dashboard', ['error' => 'Erreur lors de l’upload du fichier.']);
+            }
         } else {
-            $this->view('students/create', ['error' => 'Erreur lors de la création de l’étudiant.']);
+            $this->view('student/submit-cdc', ['student' => $student]);
         }
     }
 
     /**
-     * Affiche le formulaire d'édition d'un student (pour l'admin).
+     * Permet à l'étudiant de relancer la soumission après 7 jours
+     * si sa demande n'a pas été traitée.
+     * 
+     * @return void
+     */
+    public function remind(): void
+    {
+        $student = Student::findByUserId($_SESSION['user_id']);
+        if (!$student) {
+            header('HTTP/1.1 404 Not Found');
+            $this->view('errors/404', ['error' => 'Étudiant non trouvé.']);
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('student/dashboard');
+            return;
+        }
+
+        if ($student['theme_status'] !== 'en-traitement' || !$student['submitted_at']) {
+            $this->redirect('student/dashboard');
+            return;
+        }
+
+        // Vérifier si 7 jours se sont écoulés depuis la soumission
+        if (!$this->canRemind($student['submitted_at'])) {
+            $this->redirect('student/dashboard');
+            return;
+        }
+
+        // Mettre à jour last_reminder_at
+        $now = new DateTime();
+        $updateData = ['last_reminder_at' => $now->format('Y-m-d H:i:s')];
+        if (Student::update($student['id'], $updateData)) {
+            $this->redirect('student/dashboard');
+        } else {
+            $this->redirect('student/dashboard');
+        }
+    }
+
+    /**
+     * Vérifie si l'étudiant peut relancer (7 jours après la soumission).
+     * 
+     * @param string $submittedAt Date de soumission
+     * @return bool
+     */
+    private function canRemind(string $submittedAt): bool
+    {
+        $submittedDate = new DateTime($submittedAt);
+        $now = new DateTime();
+        $interval = $submittedDate->diff($now);
+        return $interval->days >= 7;
+    }
+
+    /**
+     * Affiche le formulaire d'édition d'un student.
      * 
      * @param int $id
      * 
@@ -119,259 +233,132 @@ class StudentController extends Controller {
         $student = Student::find($id);
         if (!$student) {
             header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404');
+            $this->view('errors/404', [
+                'title' => 'Page non trouvée',
+                'active' => ''
+            ]);
             return;
         }
-        $domains = Domain::all();
-        $this->view('students/edit', ['student' => $student, 'domains' => $domains]);
+
+        $this->view('admin/students/edit', [
+            'student' => $student,
+            'active' => 'students',
+            'domains' => Domain::all(),
+            'teachers' => Teacher::findByDomains($student['domain_id']),
+            'title' => 'Mêttre à jour un étudiant'
+        ]);
     }
 
     /**
-     * Traite le formulaire d'édition d'un student (pour l'admin).
+     * Traite le formulaire d'édition d'un teacher.
      * 
      * @return void
      */
     public function update(): void
     {
-        $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
-        if ($id <= 0) {
-            header('HTTP/1.1 400 Bad Request');
-            $this->view('errors/400', ['error' => 'ID invalide']);
-            return;
-        }
-
-        $student = Student::find($id);
+        $student = Student::find(intval(htmlspecialchars($_POST['id'])));
         if (!$student) {
             header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404');
+            $this->view('errors/404', [
+                'title' => 'Page non trouvée',
+                'active' => ''
+            ]);
             return;
         }
 
         $errors = [];
 
-        $lastnameError = $this->validateLastname($_POST['lastname'] ?? '');
+        $lastnameError = $this->validateLastname($_POST['lastname']);
         if ($lastnameError) $errors['lastname'] = $lastnameError;
 
-        $firstnameError = $this->validateFirstname($_POST['firstname'] ?? '');
+        $firstnameError = $this->validateFirstname($_POST['firstname']);
         if ($firstnameError) $errors['firstname'] = $firstnameError;
 
-        $genderError = $this->validateGender($_POST['gender'] ?? '');
+        $genderError = $this->validateGender($_POST['gender']);
         if ($genderError) $errors['gender'] = $genderError;
 
-        $emailError = $this->validateEmail($_POST['email'] ?? '', $student['user_id']);
+        $emailError = $this->validateEmail($_POST['email'], $student['user_id']);
         if ($emailError) $errors['email'] = $emailError;
 
-        $phoneError = $this->validatePhone($_POST['phone'] ?? '', $id);
-        if ($phoneError) $errors['phone'] = $phoneError;
-
         if (!isset($_POST['domain_id']) || empty($_POST['domain_id'])) {
-            $errors['domain_id'] = 'Le champ domaine est requis.';
+            $errors['domain_id'] = 'Le domaine est requis';
+        }
+        
+        if (!isset($_POST['teacher_id']) || empty($_POST['teacher_id'])) {
+            $errors['teacher_id'] = 'L\'encadreur est requis';
         }
 
         if (!empty($errors)) {
-            $domains = Domain::all();
-            $this->view('students/edit', ['student' => $student, 'domains' => $domains, 'errors' => $errors, 'data' => $_POST]);
+            $this->view('admin/students/edit', [
+                'errors' => $errors,
+                'data' => $_POST,
+                'student' => $student,
+                'domains' => Domain::all(),
+                'teachers' => Teacher::findByDomains($student['domain_id']),
+                'title' => 'Mêttre à jour un étudiant',
+                'active' => 'students'
+            ]);
             return;
         }
 
         $data = [
-            'firstname' => $_POST['firstname'] ?? null,
-            'lastname' => $_POST['lastname'] ?? null,
-            'gender' => $_POST['gender'] ?? null,
-            'email' => $_POST['email'] ?? null,
-            'phone' => $_POST['phone'] ?? null,
-            'domain_id' => $_POST['domain_id']
+            'firstname' => htmlspecialchars($_POST['firstname']),
+            'lastname' => htmlspecialchars($_POST['lastname']),
+            'gender' => htmlspecialchars($_POST['gender']),
+            'email'  => htmlspecialchars($_POST['email']),
+            'domain_id' => htmlspecialchars($_POST['domain_id']),
+            'teacher_id' => htmlspecialchars($_POST['teacher_id'])
         ];
 
-        if (Student::update($id, $data)) {
-            $this->redirect('students');
+        if (Student::update($student['id'], $data)) {
+            $this->redirect('admin/students', ['success' => 'Etudiant mis à jour avec succès.']);
         } else {
-            $domains = Domain::all();
-            $this->view('students/edit', ['student' => $student, 'domains' => $domains, 'error' => 'Erreur lors de la mise à jour de l’étudiant.']);
+            $this->redirect('admin/students', ['error' => 'Erreur lors de la mise à jour de l\'étudiant.']);
         }
     }
 
     /**
-     * Supprime un student (pour l'admin).
+     * Supprime un student.
      * 
      * @param int $id
-     * 
      * @return void
      */
     public function destroy(int $id): void
     {
+        $student = Student::find($id);
+        if (!$student) {
+            $students = Student::all();
+            $this->view('admin/students/index', ['students' => $students, 'error' => 'Étudiant non trouvé.']);
+            return;
+        }
+
+        if ($student['cdc'] !== null) {
+            $filePath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR .  $student['cdc'];
+    
+            $fileError = null;
+            if (file_exists($filePath)) {
+                if (!is_writable($filePath)) {
+                    $fileError = "Le fichier $filePath n'est pas accessible en écriture.";
+                } elseif (!unlink($filePath)) {
+                    $fileError = "Erreur lors de la suppression du fichier $filePath.";
+                }
+            }
+        }
+
         if (Student::delete($id)) {
             $students = Student::all();
-            $this->view('students/index', ['students' => $students, 'success' => 'La suppression de l\'étudiant a été effectuée avec succès']);
+            $successMessage = 'La suppression de l\'étudiant a été effectuée avec succès';
+            if ($fileError) {
+                $successMessage .= ' (mais son cdc n\' a pas pu etre supprimé) : ' . $fileError . ').';
+            }
+            $this->view('admin/students/index', ['students' => $students, 'success' => $successMessage]);
         } else {
             $students = Student::all();
-            $this->view('students/index', ['students' => $students, 'error' => 'Erreur lors de la suppression de l\'étudiant.']);
-        }
-    }
-
-    /**
-     * Traite le formulaire de soumission de CDC.
-     * 
-     * @param int $id
-     * 
-     * @return void
-     */
-    public function submitCdc(int $id): void
-    {
-        $student = Student::find($id);
-        if (!$student) {
-            header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404', ['error' => 'Étudiant non trouvé.']);
-            return;
-        }
-
-        // Vérifier si une soumission a déjà été faite
-        if ($student['theme_status'] !== 'non-soumis') {
-            $this->view('students/submit-cdc', ['student' => $student, 'error' => 'Une soumission a déjà été effectuée.']);
-            return;
-        }
-
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $errors = [];
-
-            $themeError = $this->validateTheme($_POST['theme'] ?? '');
-            if ($themeError) $errors['theme'] = $themeError;
-
-            $cdcError = $this->validateCdc($_FILES['cdc_file'] ?? []);
-            if ($cdcError) $errors['cdc_file'] = $cdcError;
-
-            $hasBinome = isset($_POST['has_binome']) && $_POST['has_binome'] == '1';
-            if (!isset($_POST['has_binome']) || !in_array($_POST['has_binome'], ['0', '1'])) {
-                $errors['has_binome'] = 'La valeur de "A un binôme ?" est invalide.';
+            $errorMessage = 'Erreur lors de la suppression de l\'étudiant.';
+            if ($fileError) {
+                $errorMessage .= ' Une erreur est aussi survenue lors de la suppression du fichier : ' . $fileError . '.';
             }
-
-            $binomeMatriculeError = $this->validateBinomeMatricule($_POST['matricule_binome'] ?? '', $hasBinome);
-            if ($binomeMatriculeError) $errors['matricule_binome'] = $binomeMatriculeError;
-
-            if ($hasBinome && $_POST['matricule_binome'] === $student['matricule']) {
-                $errors['matricule_binome'] = 'Vous ne pouvez pas vous choisir comme binôme.';
-            }
-
-            if (!empty($errors)) {
-                $this->view('students/submit-cdc', ['student' => $student, 'errors' => $errors, 'data' => $_POST]);
-                return;
-            }
-
-            $file = $_FILES['cdc_file'];
-            $fileName = 'cahier_de_charge' . '_'. Domain::find($student['domain_id']);
-            $uploadDir = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'storage';
-            $uploadPath = $uploadDir . $fileName;
-
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0777, true);
-            }
-
-            if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
-                $data = [
-                    'theme' => $_POST['theme'],
-                    'theme_status' => 'en-traitement',
-                    'cdc' => $fileName,
-                    'has_binome' => $hasBinome ? 1 : 0,
-                    'matricule_binome' => $hasBinome ? ($_POST['matricule_binome'] ?? null) : null,
-                    'description' => $_POST['description'],
-                    'submitted_at' => (new \DateTime())->format('Y-m-d H:i:s')
-                ];
-                if (Student::update($id, $data)) {
-                    $this->view('students/submit-cdc', ['student' => $student, 'success' => 'CDC soumis avec succès.']);
-                } else {
-                    $this->view('students/submit-cdc', ['student' => $student, 'error' => 'Erreur lors de la soumission.']);
-                }
-            } else {
-                $this->view('students/submit-cdc', ['student' => $student, 'error' => 'Erreur lors de l’upload du fichier.']);
-            }
-        } else {
-            $this->view('students/submit-cdc', ['student' => $student]);
+            $this->view('admin/students/index', ['students' => $students, 'error' => $errorMessage]);
         }
-    }
-
-    /**
-     * Permet à l'étudiant de relancer l'admin après 7 jours.
-     * 
-     * @param int $id
-     * @return void
-     */
-    public function remind(int $id): void
-    {
-        $student = Student::find($id);
-        if (!$student) {
-            header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404', ['error' => 'Étudiant non trouvé.']);
-            return;
-        }
-
-        // Vérifier si une relance est possible
-        if ($student['theme_status'] !== 'en-traitement' || !$student['submitted_at']) {
-            $this->view('students/remind', ['student' => $student, 'error' => 'Aucune soumission en attente de traitement.']);
-            return;
-        }
-
-        $submittedDate = new \DateTime($student['submitted_at']);
-        $now = new \DateTime();
-        $interval = $submittedDate->diff($now);
-        if ($interval->days < 7) {
-            $this->view('students/remind', ['student' => $student, 'error' => 'Vous devez attendre 7 jours après la soumission pour relancer.']);
-            return;
-        }
-
-        // Mettre à jour last_reminder_at
-        $data = [
-            'last_reminder_at' => $now->format('Y-m-d H:i:s')
-        ];
-        if (Student::update($id, $data)) {
-            $this->view('students/remind', ['student' => $student, 'success' => 'Relance envoyée avec succès.']);
-        } else {
-            $this->view('students/remind', ['student' => $student, 'error' => 'Erreur lors de la relance.']);
-        }
-    }
-
-    /**
-     * Vérifie l'encadreur assigné à l'étudiant.
-     * 
-     * @param int $id
-     * @return void
-     */
-    public function checkSupervisor(int $id): void
-    {
-        $student = Student::find($id);
-        if (!$student) {
-            header('HTTP/1.1 404 Not Found');
-            $this->view('errors/404', ['error' => 'Étudiant non trouvé.']);
-            return;
-        }
-
-        // Vérifier l'encadreur assigné
-        $supervisor = null;
-        if ($student['teacher_id'] && $student['theme_status'] === 'validé') {
-            $supervisor = Teacher::find($student['teacher_id']);
-        }
-
-        $this->view('students/check-supervisor', [
-            'student' => $student,
-            'supervisor' => $supervisor
-        ]);
-    }
-
-    /**
-     * Génére le matricule d'un student.
-     * 
-     * @return string
-     */
-    private function generateMatricule(string $domainCode): string
-    {
-        $year = date('Y');
-        $sequence = rand(1000, 9999);
-        $matricule = "{$domainCode}-{$year}-{$sequence}";
-
-        $existing = Student::findByMatricule($matricule);
-        if ($existing) {
-            return $this->generateMatricule($domainCode);
-        }
-
-        return $matricule;
     }
 }

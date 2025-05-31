@@ -58,6 +58,30 @@ class User extends Model {
     }
 
     /**
+     * Permet de récupérer le nombre total de users.
+     */
+    public static function count(): int
+    {
+        $stmt = parent::getPdo()->prepare("SELECT COUNT(*) FROM users");
+        $stmt->execute();
+        $result = $stmt->fetchColumn();
+        return (int) $result;
+    }
+
+    /**
+     * Permet de récupérer le nombre total d'utilisateur suivant le rôle.
+     * 
+     * @return int
+     */
+    public static function countUsersByRole(string $role): int
+    {
+        $stmt = parent::getPdo()->prepare("SELECT COUNT(*) FROM users WHERE role = ?");
+        $stmt->execute([$role]);
+        $result = $stmt->fetchColumn();
+        return (int) $result;
+    }
+
+    /**
      * Créé un nouvel user.
      * 
      * @param array $data
@@ -83,38 +107,31 @@ class User extends Model {
      */
     public static function update(int $id, array $data): bool
     {
-        $fields = [];
-        foreach ($data as $key => $value) {
-            $fields[] = "`$key` = :$key";
+        $user = self::find($id);
+        if (!$user) {
+            return false;
         }
-        $sql = "UPDATE users SET " . implode(', ', $fields) . ", updated_at = NOW() WHERE id = :id";
-        $stmt = parent::getPdo()->prepare($sql);
-        $data['id'] = $id;
-        return $stmt->execute($data);
-    }
 
-    /**
-     * Permet de récupérer le nombre total de users.
-     */
-    public static function count(): int
-    {
-        $stmt = parent::getPdo()->prepare("SELECT COUNT(*) FROM users");
-        $stmt->execute();
-        $result = $stmt->fetchColumn();
-        return (int) $result;
-    }
+        $userFields = [];
+        $userData = [];
+        $updatableFields = ['firstname', 'lastname', 'email', 'gender', 'role'];
 
-    /**
-     * Permet de récupérer le nombre total d'utilisateur suivant le rôle.
-     * 
-     * @return int
-     */
-    public static function countUsersByRole(string $role): int
-    {
-        $stmt = parent::getPdo()->prepare("SELECT COUNT(*) FROM users WHERE role = ?");
-        $stmt->execute([$role]);
-        $result = $stmt->fetchColumn();
-        return (int) $result;
+        foreach ($updatableFields as $field) {
+            if (array_key_exists($field, $data)) {
+                $userFields[] = "`$field` = :$field";
+                $userData[$field] = $data[$field];
+            }
+        }
+
+        if (!empty($userFields)) {
+            $userFieldsList = implode(', ', $userFields);
+            $userData['id'] = $id;
+            $sql = "UPDATE users SET $userFieldsList, updated_at = NOW() WHERE id = :id";
+            $stmt = parent::getPdo()->prepare($sql);
+            return $stmt->execute($userData);
+        }
+
+        return true;
     }
 
     /**

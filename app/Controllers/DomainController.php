@@ -22,7 +22,10 @@ class DomainController extends Controller {
     public function index(): void
     {
         $domains = Domain::all();
-        $this->view('domains/index', ['domains' => $domains]);
+        $this->view('admin/domains/index', [
+            'domains' => $domains,
+            'title' => 'Gestion des domaines d\'étude'
+        ]);
     }
 
     /**
@@ -32,7 +35,9 @@ class DomainController extends Controller {
      */
     public function create(): void
     {
-        $this->view('domains/create');
+        $this->view('admin/domains/create', [
+            'title' => 'Créer un nouveau domaine'
+        ]);
     }
 
     /**
@@ -47,14 +52,19 @@ class DomainController extends Controller {
         $errors = $this->validateDomain($_POST['code'] ?? '', $_POST['label'] ?? '');
 
         if (!empty($errors)) {
-            $this->view('domains/create', ['errors' => $errors, 'data' => $_POST]);
+            $this->view('admin/domains/create', [
+                'errors' => $errors,
+                'data' => $_POST,
+                'error' => $_SESSION['error'] ?? null
+            ]);
+            unset($_SESSION['error']);
             return;
         }
 
         if (Domain::create($_POST['code'], $_POST['label'])) {
-            $this->redirect('domains');
+            $this->redirect('admin/domains', ['success' => 'Domaine créé avec succès.']);
         } else {
-            $this->view('domains/create', ['error' => 'Erreur lors de la création du domaine.']);
+            $this->redirect('admin/domains/create', ['error' => 'Erreur lors de la création du domaine.']);
         }
     }
 
@@ -72,7 +82,11 @@ class DomainController extends Controller {
             $this->view('errors/404', []);
             return;
         }
-        $this->view('domains/edit', ['domain' => $domain]);
+        $this->view('admin/domains/edit', [
+            'domain' => $domain,
+            'title' => 'Mêttre à jour un domaine'
+        ]);
+        unset($_SESSION['error']);
     }
 
     /**
@@ -101,7 +115,13 @@ class DomainController extends Controller {
         $errors = $this->validateDomain($_POST['code'] ?? '', $_POST['label'] ?? '', $id);
 
         if (!empty($errors)) {
-            $this->view('domains/edit', ['domain' => $domain, 'errors' => $errors, 'data' => $_POST]);
+            $this->view('admin/domains/edit', [
+                'domain' => $domain,
+                'errors' => $errors,
+                'data' => $_POST,
+                'error' => $_SESSION['error'] ?? null
+            ]);
+            unset($_SESSION['error']);
             return;
         }
 
@@ -111,9 +131,9 @@ class DomainController extends Controller {
         ];
 
         if (Domain::update($id, $data)) {
-            $this->redirect('domains');
+            $this->redirect('admin/domains', ['success' => 'Domaine mis à jour avec succès.']);
         } else {
-            $this->view('domains/edit', ['domain' => $domain, 'error' => 'Erreur lors de la mise à jour du domaine.']);
+            $this->redirect('admin/domains/edit/' . $id, ['error' => 'Erreur lors de la mise à jour du domaine.']);
         }
     }
 
@@ -126,10 +146,9 @@ class DomainController extends Controller {
     public function destroy(int $id): void
     {
         if (Domain::delete($id)) {
-            $this->redirect('domains');
+            $this->redirect('admin/domains', ['success' => 'Domaine supprimé avec succès.']);
         } else {
-            $domains = Domain::all();
-            $this->view('domains/index', ['domains' => $domains, 'error' => 'Erreur lors de la suppression du domaine.']);
+            $this->redirect('admin/domains', ['error' => 'Erreur lors de la suppression du domaine.']);
         }
     }
 }

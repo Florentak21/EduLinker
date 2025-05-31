@@ -21,7 +21,6 @@ final class CreateStudentsTable extends AbstractMigration
     {
         $this->table('students')
             ->addColumn('matricule', 'string',  ['limit' => 20, 'null' => false])
-            ->addColumn('phone', 'string',  ['limit' => 50, 'null' => false])
             ->addColumn('has_binome', 'boolean', ['default' => false, 'null' => false])
             ->addColumn('matricule_binome', 'string',  ['limit' => 20, 'null' => true])
             ->addColumn('theme', 'text', ['null' => true])
@@ -32,9 +31,9 @@ final class CreateStudentsTable extends AbstractMigration
             ->addColumn('teacher_id', 'integer', ['signed' => false, 'null'=>true])
             ->addColumn('submitted_at', 'timestamp', ['null' => true])
             ->addColumn('last_reminder_at', 'timestamp', ['null' => true])
+            ->addColumn('assigned_at', 'timestamp', ['null' => true])
             ->addTimestamps()
             ->addIndex(['matricule'], ['unique'=>true])
-            ->addIndex(['phone'], ['unique'=>true])
             ->addForeignKey('user_id', 'users',    'id', ['delete'=>'CASCADE'])
             ->addForeignKey('domain_id', 'domains',  'id', ['delete'=>'CASCADE'])
             ->addForeignKey('teacher_id', 'teachers', 'id', ['delete'=>'SET_NULL'])
