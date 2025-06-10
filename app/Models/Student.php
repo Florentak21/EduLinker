@@ -376,10 +376,14 @@ class Student extends Model {
         $stmt->execute([intval($id)]);
         $userId = $stmt->fetchColumn();
 
-        if ($userId === false) {
+        if (!$userId) {
             return false;
+        } else {
+            if (User::delete($userId)) {
+                $stmt = parent::getPdo()->prepare("DELETE FROM students WHERE id = ?");
+                $stmt->execute([intval($id)]);
+            }
         }
-
-        return User::delete($userId);
+        return true;
     }
 }

@@ -1,10 +1,6 @@
-<?php 
-$teacher = $this->data['teacher'] ?? [];
-$this->layout('layouts/teacher', [
-    'title' => 'Mes étudiants', 
-    'active' => 'students',
-    'teacher' => $teacher
-]) 
+<?php
+use App\Models\Student;
+$content = ob_start();
 ?>
 
 <div class="card">
@@ -26,8 +22,7 @@ $this->layout('layouts/teacher', [
                     <th>Matricule</th>
                     <th>Thème</th>
                     <th>Statut</th>
-                    <th>Dernière activité</th>
-                    <th>Actions</th>
+                    <th>Date d'affectation</th>
                 </tr>
             </thead>
             <tbody>
@@ -45,26 +40,13 @@ $this->layout('layouts/teacher', [
                         </div>
                     </td>
                     <td><?= htmlspecialchars($student['matricule']) ?></td>
-                    <td><?= htmlspecialchars($student['theme'] ?? 'Non défini') ?></td>
+                    <td><?= htmlspecialchars($student['theme']) ?></td>
                     <td>
                         <span class="status-badge <?= strtolower(str_replace('-', '', $student['theme_status'])) ?>">
                             <?= ucfirst($student['theme_status']) ?>
                         </span>
                     </td>
-                    <td><?= date('d/m/Y', strtotime($student['updated_at'])) ?></td>
-                    <td>
-                        <div class="action-buttons">
-                            <a href="/student/details/<?= $student['id'] ?>" class="btn btn-sm btn-outline" title="Voir détails">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            <a href="/messages/<?= $student['user_id'] ?>" class="btn btn-sm btn-outline" title="Envoyer message">
-                                <i class="fas fa-envelope"></i>
-                            </a>
-                            <a href="/meetings/schedule/<?= $student['id'] ?>" class="btn btn-sm btn-primary" title="Planifier RDV">
-                                <i class="fas fa-calendar-plus"></i>
-                            </a>
-                        </div>
-                    </td>
+                    <td><?= date('d/m/Y', strtotime($student['assigned_at'])) ?></td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>
@@ -81,3 +63,9 @@ $this->layout('layouts/teacher', [
         </div>
     </div>
 </div>
+
+<?php
+unset($_SESSION['error'], $_SESSION['success']);
+$content = ob_get_clean();
+require_once dirname(__DIR__, 2) . '/layouts/teacher.php';
+?>

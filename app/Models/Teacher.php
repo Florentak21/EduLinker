@@ -147,9 +147,10 @@ class Teacher extends Model {
     public static function getAssignedStudents(int $id): array
     {
         $stmt = parent::getPdo()->prepare("
-            SELECT students.*, users.firstname, users.lastname, users.gender, users.email 
+            SELECT students.*, users.firstname, users.lastname, users.gender, users.email, domains.code, domains.label
             FROM students 
             JOIN users ON students.user_id = users.id 
+            JOIN domains ON students.domain_id = domains.id
             WHERE students.teacher_id = ?
         ");
         $stmt->execute([intval($id)]);

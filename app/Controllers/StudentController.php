@@ -112,7 +112,7 @@ class StudentController extends Controller {
                 return;
             }
             $fileName = 'cahier_de_charge_' . $student['matricule'] . '.pdf';
-            $uploadDir = dirname(__DIR__, 2) . '/storage';
+            $uploadDir = dirname(__DIR__, 2) . '/public/storage';
             $uploadPath = $uploadDir . '/' . $fileName;
 
             if (!is_dir($uploadDir)) {
@@ -323,7 +323,7 @@ class StudentController extends Controller {
         }
 
         if ($student['cdc'] !== null) {
-            $filePath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . $student['cdc'];
+            $filePath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'public/storage' . DIRECTORY_SEPARATOR . $student['cdc'];
     
             $fileError = null;
             if (file_exists($filePath)) {

@@ -1,18 +1,11 @@
 <?php
 use App\Models\Teacher;
-
 $content = ob_start();
-dump($teachers)
 ?>
 
 <div class="card">
     <div class="card-header">
-        <h2>Liste des enseignants</h2>
         <div class="card-actions">
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" placeholder="Rechercher un enseignant...">
-            </div>
             <a href="/admin/users/create" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Ajouter
             </a>
@@ -64,7 +57,7 @@ dump($teachers)
                             $domainLabels = array_map(function ($domain) {
                                 return htmlspecialchars($domain['label']);
                             }, $domains);
-                            echo "<strong>" . implode(', ', $domainLabels) . "</strong>";
+                            echo "<strong>" . implode(' - ', $domainLabels) . "</strong>";
                         } else {
                             echo '<span class="text-muted">Aucun domaine</span>';
                         }
@@ -74,7 +67,7 @@ dump($teachers)
                     <td>
                         <div class="action-buttons">
                             <a href="/admin/teachers/<?= $teacher['user_id'] ?>/domains" class="btn btn-sm btn-outline" title="Gérer les domaines">
-                                <i class="fas fa-book"></i>
+                                <i class="fas fa-plus"></i>
                             </a>
                             <a href="/admin/teachers/edit/<?= $teacher['id'] ?>" class="btn btn-sm btn-outline" title="Modifier">
                                 <i class="fas fa-edit"></i>
@@ -89,16 +82,6 @@ dump($teachers)
                 <?php endforeach; ?>
             </tbody>
         </table>
-    </div>
-
-    <div class="card-footer">
-        <div class="pagination">
-            <a href="#" class="page-item disabled"><i class="fas fa-chevron-left"></i></a>
-            <a href="#" class="page-item active">1</a>
-            <a href="#" class="page-item">2</a>
-            <a href="#" class="page-item">3</a>
-            <a href="#" class="page-item"><i class="fas fa-chevron-right"></i></a>
-        </div>
     </div>
 </div>
 

@@ -34,30 +34,10 @@
         <!-- Main Content -->
         <main class="main-content">
             <header class="main-header">
-                <h1><?= htmlspecialchars($title ?? 'Tableau de bord') ?></h1>
-                <div class="header-actions">
-                    <div class="notifications">
-                        <i class="fas fa-bell"></i>
-                        <span class="badge">2</span>
-                    </div>
-                </div>
+                <h1><?= htmlspecialchars($title) ?></h1>
             </header>
 
             <div class="content-container">
-                <?php if (isset($success)): ?>
-                    <div class="alert success">
-                        <i class="fas fa-check-circle"></i>
-                        <?= htmlspecialchars($success) ?>
-                    </div>
-                <?php endif; ?>
-
-                <?php if (isset($error)): ?>
-                    <div class="alert error">
-                        <i class="fas fa-exclamation-circle"></i>
-                        <?= htmlspecialchars($error) ?>
-                    </div>
-                <?php endif; ?>
-
                 <?= $content ?>
             </div>
         </main>

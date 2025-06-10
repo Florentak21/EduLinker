@@ -97,7 +97,8 @@ $app->router->get('admin/domains/destroy/{id}', DomainController::class, 'destro
  * Accessibles uniquement aux teachers.
  * Permet aux teachers de consulter leur dashboard.
  */
-$app->router->post('teacher/dashboard/', TeacherController::class, 'dashboard', [new AuthMiddleware(), new RoleMiddleware(['teacher'])]);
+$app->router->get('teacher/dashboard', TeacherController::class, 'dashboard', [new AuthMiddleware(), new RoleMiddleware(['teacher'])]);
+$app->router->get('teacher/students', TeacherController::class, 'students', [new AuthMiddleware(), new RoleMiddleware(['teacher'])]);
 
 /**
  * Routes pour les students.

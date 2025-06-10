@@ -40,20 +40,39 @@ class TeacherController extends Controller {
      * 
      * @return void
      */
-    public function dashboard(int $id): void
+    public function dashboard(): void
     {
-        $teacher = Teacher::find($id);
+        $teacher = Teacher::findByUserId($_SESSION['user_id']);
         if (!$teacher) {
             $this->redirect('error/404', ['message' => 'Enseignant non trouvé.']);
             return;
         }
 
-        $data = [
+        $this->view('teacher/dashboard',[
+            'title' => 'Tableau de bord',
             'teacher' => $teacher,
-            'students' => Teacher::getAssignedStudents($id)
-        ];
+            'total_students' => Teacher::countAssignedStudents($teacher['id']),
+            'students' => Teacher::getAssignedStudents($teacher['id'])
+        ]);
+    }
 
-        $this->view('teachers/dashboard', $data);
+    /**
+     * Récupère les étudiants encadrés par un enseignant particulier.
+     * 
+     * @return void
+     */
+    public function students(): void
+    {
+        $teacher = Teacher::findByUserId($_SESSION['user_id']);
+        if (!$teacher) {
+            $this->redirect('error/404', ['message' => 'Enseignant non trouvé.']);
+            return;
+        }
+
+        $this->view('teacher/students/index',[
+            'title' => 'Liste de mes étudiants',
+            'students' => Teacher::getAssignedStudents($teacher['id'])
+        ]);
     }
 
     /**

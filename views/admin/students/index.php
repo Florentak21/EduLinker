@@ -18,10 +18,6 @@
 
     <div class="card-header">
         <div class="card-actions">
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" placeholder="Rechercher un étudiant...">
-            </div>
             <a href="/admin/users/create" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Ajouter
             </a>
@@ -71,7 +67,7 @@
                     <td>
                         <div class="action-buttons">
                             <a href="/admin/students/show-theme/<?= $student['id'] ?>" class="btn btn-sm btn-outline" title="Thème">
-                                <i class="fas fa-edit"></i>
+                                <i class="fas fa-eye"></i>
                             </a>
                             <a href="/admin/students/edit/<?= $student['id'] ?>" class="btn btn-sm btn-outline" title="Modifier">
                                 <i class="fas fa-edit"></i>
@@ -86,16 +82,6 @@
                 <?php endforeach; ?>
             </tbody>
         </table>
-    </div>
-
-    <div class="card-footer">
-        <div class="pagination">
-            <a href="#" class="page-item disabled"><i class="fas fa-chevron-left"></i></a>
-            <a href="#" class="page-item active">1</a>
-            <a href="#" class="page-item">2</a>
-            <a href="#" class="page-item">3</a>
-            <a href="#" class="page-item"><i class="fas fa-chevron-right"></i></a>
-        </div>
     </div>
 </div>
 

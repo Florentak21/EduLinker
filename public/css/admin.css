@@ -631,8 +631,8 @@ select.form-control {
 }
 
 .role-badge.teacher {
-    background-color: #ede9fe;
-    color: #7c3aed;
+    background-color: #e0e7ff;
+    color: var(--primary-color);
 }
 
 .role-badge.student {
@@ -640,18 +640,273 @@ select.form-control {
     color: #166534;
 }
 
-/* Responsive Table */
+/* Styles spécifiques pour cette page */
+.project-status {
+    display: flex;
+    align-items: center;
+}
+
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-badge.pending {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.status-badge.completed {
+    background-color: #d1fae5;
+    color: var(--secondary-color);
+}
+
+.status-badge.draft {
+    background-color: #f3f4f6;
+    color: var(--text-light);
+}
+
+.user-profile-section {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.user-avatar.large {
+    width: 4rem;
+    height: 4rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.user-avatar.teacher {
+    background-color: #e0e7ff;
+    color: var(--primary-color);
+}
+
+.user-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.info-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-light);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.info-value {
+    font-size: 1rem;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.theme-card {
+    margin-top: 1rem;
+}
+
+.theme-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.theme-item h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.theme-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    background-color: #f0f9ff;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border-left: 4px solid var(--primary-color);
+}
+
+.theme-description {
+    background-color: #f9fafb;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    line-height: 1.6;
+    color: var(--text-color);
+}
+
+.document-link {
+    display: flex;
+    gap: 1rem;
+}
+
+.document-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.document-preview {
+    border: 2px dashed var(--border-color);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background-color: #fafafa;
+}
+
+.pdf-preview {
+    position: relative;
+    min-height: 200px;
+}
+
+.pdf-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2rem;
+    color: var(--text-light);
+    text-align: center;
+}
+
+.pdf-placeholder i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #dc2626;
+}
+
+.pdf-placeholder p {
+    font-size: 1rem;
+    margin: 0;
+}
+
+.document-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.document-actions .btn {
+    flex: 1;
+    min-width: 150px;
+    justify-content: center;
+}
+
+/* Animation pour l'apparition du PDF */
+#pdfViewer {
+    transition: all 0.3s ease;
+    border-radius: 0.5rem;
+}
+
+#pdfViewer.show {
+    display: block !important;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Loading state */
+.loading-pdf {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: var(--primary-color);
+}
+
+.loading-pdf i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.actions-card {
+    margin-top: 1.5rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.actions-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.navigation-actions, .theme-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.theme-actions {
+    flex-wrap: wrap;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-    .table-responsive {
-        border: 1px solid #e5e7eb;
-        border-radius: 0.5rem;
-        overflow: hidden;
+    .dashboard-grid {
+        grid-template-columns: 1fr;
     }
     
-    table {
-        display: block;
+    .user-profile-section {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .actions-section {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .navigation-actions, .theme-actions {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .theme-actions {
+        flex-direction: column;
+    }
+    
+    .theme-actions .btn {
         width: 100%;
-        overflow-x: auto;
-        white-space: nowrap;
+        justify-content: center;
     }
 }
