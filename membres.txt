@@ -1,5 +1,5 @@
 MEMBRES DU GROUPE
-1. ADESU Kokouvi
-2. AYIDEDJI Florent
-3. BOSSOU Gémisse
-4. KPADJOUDA Enock
+1. ADESU Kokouvi => Views
+2. AYIDEDJI Florent => Controllers
+3. BOSSOU Gémisse => Intégration
+4. KPADJOUDA Enock => Models
