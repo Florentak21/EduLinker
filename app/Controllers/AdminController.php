@@ -217,7 +217,7 @@ class AdminController extends Controller {
 
         // Supprimer le fichier CDC s'il existe
         if (!empty($student['cdc'])) {
-            $filePath = dirname(__DIR__, 2) . '/storage/' . $student['cdc'];
+            $filePath = dirname(__DIR__, 2) . '/public/storage/' . $student['cdc'];
             if (file_exists($filePath)) {
                 if (!unlink($filePath)) {
                     $this->redirect('admin/students', ['error' => 'Erreur lors de la suppression du fichier CDC.']);

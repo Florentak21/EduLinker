@@ -21,7 +21,9 @@
             <nav>
                 <a href="<?= $results['url'] ?>" class="btn btn-outline"><?= $results['link'] ?></a>
                 <?php if (isset($_SESSION['user_id'])): ?>
-                    <a href="/logout" class="btn btn-outline">Déconnexion</a>
+                    <a href="/logout" class="logout" onclick="return confirm('Voulez-vous vraiment vous déconnecter ?');">
+                        <i class="fas fa-sign-out-alt"></i> Déconnexion
+                    </a>
                 <?php endif; ?>
             </nav>
         </div>

@@ -45,7 +45,7 @@
                     <td><?= date('d/m/Y', strtotime($domain['created_at'])) ?></td>
                     <td>
                         <div class="action-buttons">
-                            <a href="/admin/domains/edit/<?= $domain['id'] ?>" class="btn btn-sm btn-outline" title="Modifier">
+                            <a href="/admin/domains/edit/<?= $domain['id'] ?>" class="btn btn-sm btn-edit" title="Modifier">
                                 <i class="fas fa-edit"></i>
                             </a>
                             <a href="/admin/domains/destroy/<?= $domain['id'] ?>" class="btn btn-sm btn-danger" title="Supprimer" 
@@ -58,16 +58,6 @@
                 <?php endforeach; ?>
             </tbody>
         </table>
-    </div>
-
-    <div class="card-footer">
-        <div class="pagination">
-            <a href="#" class="page-item disabled"><i class="fas fa-chevron-left"></i></a>
-            <a href="#" class="page-item active">1</a>
-            <a href="#" class="page-item">2</a>
-            <a href="#" class="page-item">3</a>
-            <a href="#" class="page-item"><i class="fas fa-chevron-right"></i></a>
-        </div>
     </div>
 </div>
 

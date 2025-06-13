@@ -6,6 +6,7 @@
     <title>Admin - <?= htmlspecialchars($title ?? 'EduLinker') ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/profile.css">
 </head>
 <body>
     <div class="admin-container">
@@ -34,7 +35,7 @@
                 <a href="/profile-show" class="<?= $active === 'profile' ? 'active' : '' ?>">
                     <i class="fas fa-user-circle"></i> Profil
                 </a>
-                <a href="/logout" class="logout">
+                <a href="/logout" class="logout" onclick="return confirm('Voulez-vous vraiment vous déconnecter ?');">
                     <i class="fas fa-sign-out-alt"></i> Déconnexion
                 </a>
             </nav>

@@ -10,6 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Étudiant - <?= htmlspecialchars($title ?? 'EduLinker') ?></title>
     <link rel="stylesheet" href="/css/student.css">
+    <link rel="stylesheet" href="/css/profile.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
@@ -33,7 +34,7 @@
                 <a href="/student/submit-cdc" class="<?= $active === 'cdc' ? 'active' : '' ?>">
                     <i class="fas fa-file-upload"></i> Soumettre mon CDC
                 </a>
-                <a href="/logout" class="logout">
+                <a href="/logout" class="logout" onclick="return confirm('Voulez-vous vraiment vous déconnecter ?');">
                     <i class="fas fa-sign-out-alt"></i> Déconnexion
                 </a>
             </nav>

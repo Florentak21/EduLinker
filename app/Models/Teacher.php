@@ -12,14 +12,22 @@ class Teacher extends Model {
      * @return array
      */
     public static function all(): array
-    {
-        $stmt = parent::getPdo()->query("
-            SELECT DISTINCT teachers.*, users.firstname, users.lastname, users.gender, users.email
-            FROM teachers 
-            JOIN users ON teachers.user_id = users.id
-        ");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+{
+    $stmt = parent::getPdo()->query("
+        SELECT
+            MIN(teachers.id) AS id,
+            teachers.user_id,
+            users.firstname, 
+            users.lastname, 
+            users.gender, 
+            users.email
+        FROM teachers 
+        JOIN users ON teachers.user_id = users.id
+        GROUP BY teachers.user_id, users.firstname, users.lastname, users.gender, users.email
+    ");
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 
     /**
      * Recherche un teacher grâce à son teacher_id.
@@ -139,9 +147,10 @@ class Teacher extends Model {
     public static function getAssignedStudents(int $id): array
     {
         $stmt = parent::getPdo()->prepare("
-            SELECT students.*, users.firstname, users.lastname, users.gender, users.email 
+            SELECT students.*, users.firstname, users.lastname, users.gender, users.email, domains.code, domains.label
             FROM students 
             JOIN users ON students.user_id = users.id 
+            JOIN domains ON students.domain_id = domains.id
             WHERE students.teacher_id = ?
         ");
         $stmt->execute([intval($id)]);

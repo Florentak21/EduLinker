@@ -10,7 +10,6 @@ class CreateTeachers extends AbstractSeed
     {
         $password = password_hash('Bonjour@25', PASSWORD_DEFAULT);
 
-        // Liste des enseignants avec domaine_id (1, 2, 3), commençant à user_id 2
         $usersData = [
             // Domaine 1 (AL)
             ['id' => 2,  'firstname' => 'Marie',  'lastname' => 'Dupont',   'email' => 'marie.dupont@school.com',   'gender' => 'F'],
