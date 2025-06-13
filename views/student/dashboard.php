@@ -55,7 +55,7 @@
                     <p><?= htmlspecialchars($student['teacher_email'] ?? 'N/A') ?></p>
                 </div>
             </div>
-            <a href="mailto:<?= htmlspecialchars($student['teacher_email'] ?? '') ?>" class="btn btn-outline">
+            <a href="mailto:<?= htmlspecialchars($student['teacher_email'] ?? '') ?>" class="btn btn-outline" style="text-decoration: none;">
                 <i class="fas fa-envelope"></i> Contacter
             </a>
         <?php else: ?>
@@ -88,7 +88,7 @@
                 <?php if (isset($student['cdc'])): ?>
                     <div class="detail-item">
                         <label>CDC :</label>
-                        <a href="/storage/<?= htmlspecialchars($student['cdc']) ?>" download class="file-link">
+                        <a href="/storage/<?= htmlspecialchars($student['cdc']) ?>" download class="file-link" style="text-decoration: none;">
                             <i class="fas fa-file-pdf"></i> Télécharger
                         </a>
                     </div>

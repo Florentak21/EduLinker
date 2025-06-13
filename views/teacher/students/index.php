@@ -6,12 +6,6 @@ $content = ob_start();
 <div class="card">
     <div class="card-header">
         <h2>Liste de mes étudiants encadrés</h2>
-        <div class="card-actions">
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" placeholder="Rechercher un étudiant...">
-            </div>
-        </div>
     </div>
     
     <div class="table-responsive">
@@ -51,16 +45,6 @@ $content = ob_start();
                 <?php endforeach; ?>
             </tbody>
         </table>
-    </div>
-    
-    <div class="card-footer">
-        <div class="pagination">
-            <a href="#" class="page-item disabled"><i class="fas fa-chevron-left"></i></a>
-            <a href="#" class="page-item active">1</a>
-            <a href="#" class="page-item">2</a>
-            <a href="#" class="page-item">3</a>
-            <a href="#" class="page-item"><i class="fas fa-chevron-right"></i></a>
-        </div>
     </div>
 </div>
 

@@ -85,7 +85,7 @@ $content = ob_start();
                         <?= date('d/m/Y', strtotime($student['submitted_at'])) ?>
                     </p>
                 </div>
-                <a href="/download/<?= $student['cdc'] ?>" class="document-download">
+                <a href="/storage/<?= htmlspecialchars($student['cdc']) ?>" download class="file-link">
                     <i class="fas fa-download"></i>
                 </a>
             </div>

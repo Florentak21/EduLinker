@@ -67,7 +67,7 @@
                             <?php if ($_SESSION['user_id'] === $user['id']): ?>
                                 <span>moi meme</span>
                             <?php else: ?>
-                                <a href="/admin/users/edit/<?= $user['id'] ?>" class="btn btn-sm btn-outline" title="Modifier">
+                                <a href="/admin/users/edit/<?= $user['id'] ?>" class="btn btn-sm btn-edit" title="Modifier">
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 <a href="/admin/users/destroy/<?= $user['id'] ?>" class="btn btn-sm btn-danger" title="Supprimer" 

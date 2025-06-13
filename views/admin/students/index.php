@@ -66,10 +66,10 @@
                     </td>
                     <td>
                         <div class="action-buttons">
-                            <a href="/admin/students/show-theme/<?= $student['id'] ?>" class="btn btn-sm btn-outline" title="Thème">
+                            <a href="/admin/students/show-theme/<?= $student['id'] ?>" class="btn btn-sm btn-view" title="Thème">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            <a href="/admin/students/edit/<?= $student['id'] ?>" class="btn btn-sm btn-outline" title="Modifier">
+                            <a href="/admin/students/edit/<?= $student['id'] ?>" class="btn btn-sm btn-edit" title="Modifier">
                                 <i class="fas fa-edit"></i>
                             </a>
                             <a href="/admin/students/destroy/<?= $student['id'] ?>" title="Supprimer" class="btn btn-sm btn-danger" 

@@ -213,12 +213,30 @@ body {
 }
 
 .btn-danger {
-    background-color: var(--danger-color);
-    color: white;
+  background-color: #fee2e2;
+  color: #dc2626;
 }
 
 .btn-danger:hover {
-    background-color: #dc2626;
+    background-color: #fecaca;
+}
+
+.btn-edit {
+  background-color: #fef9c3;
+  color: #ca8a04;
+}
+
+.btn-edit:hover {
+    background-color: #fde68a;
+}
+
+.btn-view {
+  background-color: #e0f2fe;
+  color: #2563eb; 
+}
+
+.btn-view:hover {
+    background-color: #bae6fd;
 }
 
 /* Tables */

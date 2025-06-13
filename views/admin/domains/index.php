@@ -45,7 +45,7 @@
                     <td><?= date('d/m/Y', strtotime($domain['created_at'])) ?></td>
                     <td>
                         <div class="action-buttons">
-                            <a href="/admin/domains/edit/<?= $domain['id'] ?>" class="btn btn-sm btn-outline" title="Modifier">
+                            <a href="/admin/domains/edit/<?= $domain['id'] ?>" class="btn btn-sm btn-edit" title="Modifier">
                                 <i class="fas fa-edit"></i>
                             </a>
                             <a href="/admin/domains/destroy/<?= $domain['id'] ?>" class="btn btn-sm btn-danger" title="Supprimer" 

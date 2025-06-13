@@ -66,10 +66,10 @@ $content = ob_start();
                     <td><?= Teacher::countAssignedStudents($teacher['id']) ?? 0 ?></td>
                     <td>
                         <div class="action-buttons">
-                            <a href="/admin/teachers/<?= $teacher['user_id'] ?>/domains" class="btn btn-sm btn-outline" title="Gérer les domaines">
+                            <a href="/admin/teachers/<?= $teacher['user_id'] ?>/domains" class="btn btn-sm btn-view" title="Gérer les domaines">
                                 <i class="fas fa-plus"></i>
                             </a>
-                            <a href="/admin/teachers/edit/<?= $teacher['id'] ?>" class="btn btn-sm btn-outline" title="Modifier">
+                            <a href="/admin/teachers/edit/<?= $teacher['id'] ?>" class="btn btn-sm btn-edit" title="Modifier">
                                 <i class="fas fa-edit"></i>
                             </a>
                             <a href="/admin/teachers/destroy/<?= $teacher['id'] ?>" class="btn btn-sm btn-danger" title="Supprimer" 
